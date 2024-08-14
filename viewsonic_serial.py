@@ -283,7 +283,7 @@ class ViewSonicProjector:
 
     def __init__(
         self,
-        port: str = '/dev/ttyS0',
+        port: str = '/dev/ttyUSB0',
         baudrate: int = 115200,
         data_byte_length = serial.EIGHTBITS,
         parity_check = serial.PARITY_NONE,
