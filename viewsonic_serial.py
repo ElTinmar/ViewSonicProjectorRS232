@@ -316,7 +316,7 @@ class ViewSonicProjector:
     def __del__(self):
         self.ser.close()
 
-    def set_power_on(self):
+    def power_on(self):
         self._send_write_packet(HEADER.WRITE + CMD.POWER_ON + EMPTY)
         warmup = True
         while warmup:
@@ -325,7 +325,7 @@ class ViewSonicProjector:
             if res == 2:
                 break 
     
-    def set_power_off(self):
+    def power_off(self):
         self._send_write_packet(HEADER.WRITE + CMD.POWER_OFF + EMPTY)
         cooldown = True
         while cooldown:
@@ -662,7 +662,9 @@ class ViewSonicProjector:
 
         return RESPONSE_TWO_BYTE_TO_INT[response] 
 
-
 if __name__ == '__main__':
 
     proj = ViewSonicProjector()
+    proj.power_on()
+    time.sleep(2)
+    proj.power_off()
