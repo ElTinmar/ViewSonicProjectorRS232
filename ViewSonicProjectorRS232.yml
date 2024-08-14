@@ -1,0 +1,9 @@
+name: ViewSonicProjectorRS232
+channels:
+- conda-forge
+dependencies:
+- python >= 3.8
+- ipython
+- pip
+- pyserial
+  
