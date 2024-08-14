@@ -642,11 +642,16 @@ class ViewSonicProjector:
         self.ser.write(data)
         time.sleep(0.1)  # Short delay to allow for data to be received
         response = self.ser.read(READ_RESPONSE_NUM_BYTES)
+        print(response)
 
-        if checksum(response[:-1]) != response[-1]:
+        if checksum(response[:-1]) != response[-1:]:
             print("invalid response checksum, problem during transmission")
             return 0
-
+        
+        if response == HEADER.DISABLED:
+            print('function is disabled')
+            return 
+        
         return RESPONSE_ONE_BYTE_TO_INT[response]
     
     def _send_read_packet_two_byte(self, packet: bytes) -> int:
@@ -656,9 +661,13 @@ class ViewSonicProjector:
         time.sleep(0.1)  # Short delay to allow for data to be received
         response = self.ser.read(READ_RESPONSE_NUM_BYTES)
 
-        if checksum(response[:-1]) != response[-1]:
+        if checksum(response[:-1]) != response[-1:]:
             print("invalid response checksum, problem during transmission")
-            return 0
+            return 
+        
+        if response == HEADER.DISABLED:
+            print('function is disabled')
+            return 
 
         return RESPONSE_TWO_BYTE_TO_INT[response] 
 
