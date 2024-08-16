@@ -8,6 +8,12 @@ class TransmissionError(Exception):
 class FunctionDisabled(Exception):
     pass
 
+class ProjectorOFF(Exception):
+    pass
+
+class CommandFailed(Exception):
+    pass
+
 class HEADER:
     '''
     5-bytes headers for read/write queries and device responses.
@@ -675,7 +681,7 @@ class ViewSonicProjector:
         self.ser.write(query)
 
         if self.timeout is not None:
-            time.sleep(0.1)  # Short delay to allow for data to be received
+            time.sleep(0.2)  # Short delay to allow for data to be received
 
         response_header = self.ser.read(HEADER.NUM_BYTES)
         response_payload = self.ser.read(payload_length(response_header))
@@ -687,34 +693,24 @@ class ViewSonicProjector:
         if checksum(response[:-1]) != response[-1]:
             raise TransmissionError('invalid checksum')
 
+        if response == HEADER.DISABLED:
+            raise FunctionDisabled
+        
+        if response == HEADER.PROJ_OFF:
+            raise ProjectorOFF
+
         return response
 
     def _send_write_packet(self, packet: bytes):
 
         response = self._send_packet(HEADER.WRITE + packet)
-
-        if response == HEADER.ACK:
-            print("ACK received, command successful.")
-
-        elif response == HEADER.DISABLED:
-            print('command disabled')
-
-        elif response == HEADER.PROJ_OFF:
-            print('projector is powered off')
-
-        else:
-            print("Unexpected response received.")
+        
+        if response != HEADER.ACK:
+            raise CommandFailed
 
     def _send_read_packet(self, packet: bytes) -> bytes:
 
         response = self._send_packet(HEADER.READ + packet)
-        
-        if response == HEADER.DISABLED:
-            print('function is disabled')
-        
-        if response == HEADER.PROJ_OFF:
-            print('projector is powered off')
-        
         return response
 
     def _send_read_packet_one_byte(self, packet: bytes) -> int:
@@ -740,7 +736,10 @@ def reverse_engineer(proj: ViewSonicProjector):
         for cmd2 in range(10,16): 
             for cmd3 in range(256):
                 cmd = bytes([cmd2, cmd3])
-                res[cmd] = proj._send_read_packet(cmd)
+                try:
+                    res[cmd] = proj._send_read_packet(cmd)
+                except FunctionDisabled:
+                    res[cmd] = b''
         return res
     
     scan1 = scan()
