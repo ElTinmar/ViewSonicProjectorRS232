@@ -14,7 +14,7 @@ class TransmissionError(Exception):
 class HEADER:
     '''
     5-bytes headers for read/write queries and device responses.
-    I added part of the payload to the headers when it never changes.
+    I added part of the command payload to the headers when it never changes.
     '''
     NUM_BYTES = 5
     WRITE = b'\x06\x14\x00\x04\x00' + b'\x34'
