@@ -363,35 +363,39 @@ class ViewSonicProjector:
         self._send_write_packet(CMD.POWER_ON + EMPTY)
 
         # Wait until the projector has warmed up
-        try:
-            while True:
+        while True:
+            try:
                 res = self.get_projector_status()
-                if res == PowerStatus.WARM_UP:
-                    time.sleep(1)
-                elif res == PowerStatus.ON:
-                    break 
-                else:
-                    raise ValueError
+            except FunctionDisabled:
+                break
+            except ProjectorOFF:
+                time.sleep(1)
+                continue
+                
+            if res == PowerStatus.WARM_UP:
+                time.sleep(1)
+            elif res == PowerStatus.ON:
+                break 
+            else:
+                raise ValueError
 
-        except FunctionDisabled:
-            pass
     
     def power_off(self):
         self._send_write_packet(CMD.POWER_OFF + EMPTY)
 
         # Wait until the projector has cooled down
-        try:
-            while True:
+        while True:
+            try:
                 res = self.get_projector_status()
-                if res == PowerStatus.COOL_DOWN:
-                    time.sleep(1)
-                elif res == PowerStatus.OFF:
-                    break
-                else:
-                    raise ValueError 
+            except FunctionDisabled:
+                break
 
-        except FunctionDisabled:
-            pass
+            if res == PowerStatus.COOL_DOWN:
+                time.sleep(1)
+            elif res == PowerStatus.OFF:
+                break
+            else:
+                raise ValueError 
 
     def get_power_status(self) -> int:
         return self._send_read_packet_one_byte(CMD.POWER_ON)
