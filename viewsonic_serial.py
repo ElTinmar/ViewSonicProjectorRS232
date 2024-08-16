@@ -909,6 +909,8 @@ def scan(proj: ViewSonicProjector) -> Dict:
 
     if os.path.exists(SCANFILE):
 
+        print('scan file found, loading commands')
+
         with open(SCANFILE,'r') as f:
             commands = json.load(f)
 
@@ -921,6 +923,8 @@ def scan(proj: ViewSonicProjector) -> Dict:
                 pass
 
     else:
+
+        print('scan file not found, performing an exhaustive scan')
 
         for cmd2 in range(256): 
             for cmd3 in range(256):
