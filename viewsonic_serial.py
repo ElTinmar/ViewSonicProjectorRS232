@@ -1,13 +1,25 @@
 import serial
 import time
+from typing import Optional 
+
+# TODO: reverse engineer command codes
+#   - exhaustive scan of cmd2/cmd3 space using read query (should be safe)
+#   - modify setting with projector OSD
+#   - exhaustive scan of cmd2/cmd3 space using read query
+#   - check which values have changed (hopefully only one, but some OSD settings might alter several registers at once)
+
+class TransmissionError(Exception):
+    pass
 
 class HEADER:
+    NUM_BYTES = 5
     WRITE = b'\x06\x14\x00\x04\x00\x34'
     READ = b'\x07\x14\x00\x05\x00\x34\x00\x00'
     READ_RESPONSE_ONE_BYTE = b'\x05\x14\x00\x03\x00\x00\x00'
     READ_RESPONSE_TWO_BYTE = b'\x05\x14\x00\x04\x00\x00\x00'
     ACK = b'\x03\x14\x00\x00\x00\x14'
     DISABLED = b'\x00\x14\x00\x00\x00\x14'
+    PROJ_OFF = b'\x00\x00\x00\x00\x00\x00'
 
 class CMD:
     POWER_ON = b'\x11\x00'
@@ -64,6 +76,7 @@ class CMD:
     OPERATING_TEMPERATURE = b'\x15\x03'
     LAMP_MODE_CYCLE = b'\x13\x36'
     AUDIO_MODE_CYCLE = b'\x13\x35'
+    #FAST_INPUT_MODE = b'\x00\x00'
 
 EMPTY = b'\x00'
 
@@ -268,15 +281,20 @@ RESPONSE_INT_TO_TWO_BYTE = {
 }
 RESPONSE_TWO_BYTE_TO_INT = {v: k for k,v in RESPONSE_INT_TO_TWO_BYTE.items()}
 
-WRITE_RESPONSE_NUM_BYTES = 6
-READ_RESPONSE_NUM_BYTES = 9
-
 def checksum(packet: bytes) -> bytes:
+    '''compute checksum as the sum of bytes 1 to end'''
     return sum(packet[1:]).to_bytes()
+
+def payload_length(header: bytes) -> int:
+    '''get payload length from header'''
+    lsb = header[3]
+    msb = header[4]
+    return lsb + (msb << 8)
 
 class ViewSonicProjector:
     '''
-    Requires a crossovcer (null modem) cable for use with PC
+    Requires a crossover (null modem) cable for use with PC
+    Only 3 pins need to be connected (RX,TX and GND)
     '''
 
     VALID_BAUD_RATES = [2400,4800,9600,14400,19200,38400,115200]
@@ -288,8 +306,9 @@ class ViewSonicProjector:
         data_byte_length = serial.EIGHTBITS,
         parity_check = serial.PARITY_NONE,
         num_stop_bit: int = serial.STOPBITS_ONE,
-        timeout: float = 1.0,
-        flow_control: bool = False
+        timeout: Optional[float] = None,
+        flow_control: bool = False,
+        verbose: bool = False
         ):
 
         if baudrate not in self.VALID_BAUD_RATES:
@@ -302,6 +321,7 @@ class ViewSonicProjector:
         self.num_stop_bit = num_stop_bit
         self.timeout = timeout
         self.flow_control = flow_control
+        self.verbose = verbose
 
         self.ser = serial.Serial(
             port = port,
@@ -532,7 +552,10 @@ class ViewSonicProjector:
     def volume_down(self):
         self._send_write_packet(HEADER.WRITE + CMD.VOLUME_DOWN + EMPTY)
 
-    # CHECK THIS, THE DOC IS WEIRD
+    # CHECK THIS, THE DOC IS WEIRD 
+    # is it setting the volume to eleven ? 
+    # should I supply an integer ? 
+    # What's the volume range ?
     def set_volume(self):
         self._send_write_packet(HEADER.WRITE + CMD.VOLUME + b'\x11')
 
@@ -553,7 +576,7 @@ class ViewSonicProjector:
 
     def get_light_source_usage_time(self):
         #TODO special case
-        pass
+        response = self._send_read_packet(HEADER.READ + CMD.LIGHT_SOURCE_USAGE_TIME)
 
     def set_HDMI_format(self, data: HDMIFormat):
         self._send_write_packet(HEADER.WRITE + CMD.HDMI_FORMAT + data)
@@ -575,7 +598,7 @@ class ViewSonicProjector:
     
     def get_error_status(self):
         #TODO special case
-        pass
+        response = self._send_read_packet(HEADER.READ + CMD.ERROR_STATUS)
     
     def set_brilliant_color(self, data: BrilliantColor):
         self._send_write_packet(HEADER.WRITE + CMD.BRILLIANT_COLOR + data)
@@ -609,7 +632,7 @@ class ViewSonicProjector:
     
     def get_operating_temperature(self):
         #TODO special case
-        pass
+        response = self._send_read_packet(HEADER.READ + CMD.OPERATING_TEMPERATURE)
 
     def cycle_lamp_mode(self):
         self._send_write_packet(HEADER.WRITE + CMD.LAMP_MODE_CYCLE + EMPTY)
@@ -617,15 +640,30 @@ class ViewSonicProjector:
     def cycle_audio_mode(self):
         self._send_write_packet(HEADER.WRITE + CMD.AUDIO_MODE_CYCLE + EMPTY)
 
-    def _send_write_packet(self, packet: bytes):
+    def _send_packet(self, packet: bytes) -> bytes:
 
-        data = packet + checksum(packet)
-        self.ser.write(data)
+        query = packet + checksum(packet)
+
+        if self.verbose:
+            print('>> ' + query.decode())
+
+        self.ser.write(query)
         time.sleep(0.1)  # Short delay to allow for data to be received
-        response = self.ser.read(WRITE_RESPONSE_NUM_BYTES)
+        response_header = self.ser.read(HEADER.NUM_BYTES)
+        response_payload = self.ser.read(payload_length(response_header))
+        response = response_header + response_payload
+
+        if self.verbose:
+            print(response.decode() + '\n')
         
         if checksum(response[:-1]) != response[-1]:
-            print("invalid response checksum, problem during transmission")
+            raise TransmissionError('invalid checksum')
+
+        return response
+
+    def _send_write_packet(self, packet: bytes):
+
+        response = self._send_packet(packet)
 
         if response == HEADER.ACK:
             print("ACK received, command successful.")
@@ -633,47 +671,37 @@ class ViewSonicProjector:
         elif response == HEADER.DISABLED:
             print('command disabled')
 
+        elif response == HEADER.PROJ_OFF:
+            print('projector is powered off')
+
         else:
             print("Unexpected response received.")
 
-    def _send_read_packet_one_byte(self, packet: bytes) -> int:
+    def _send_read_packet(self, packet: bytes) -> bytes:
 
-        data = packet + checksum(packet)
-        self.ser.write(data)
-        time.sleep(0.1)  # Short delay to allow for data to be received
-        response = self.ser.read(READ_RESPONSE_NUM_BYTES)
-        print(response)
-
-        if checksum(response[:-1]) != response[-1:]:
-            print("invalid response checksum, problem during transmission")
-            return 0
+        response = self._send_packet(packet)
         
         if response == HEADER.DISABLED:
             print('function is disabled')
-            return 
         
+        if response == HEADER.PROJ_OFF:
+            print('projector is powered off')
+        
+        return response
+
+    def _send_read_packet_one_byte(self, packet: bytes) -> int:
+
+        response = self._send_read_packet(packet)        
         return RESPONSE_ONE_BYTE_TO_INT[response]
     
     def _send_read_packet_two_byte(self, packet: bytes) -> int:
 
-        data = packet + checksum(packet)
-        self.ser.write(data)
-        time.sleep(0.1)  # Short delay to allow for data to be received
-        response = self.ser.read(READ_RESPONSE_NUM_BYTES)
-
-        if checksum(response[:-1]) != response[-1:]:
-            print("invalid response checksum, problem during transmission")
-            return 
-        
-        if response == HEADER.DISABLED:
-            print('function is disabled')
-            return 
-
+        response = self._send_read_packet(packet)
         return RESPONSE_TWO_BYTE_TO_INT[response] 
 
 if __name__ == '__main__':
 
-    proj = ViewSonicProjector()
+    proj = ViewSonicProjector(verbose=True)
     proj.power_on()
     time.sleep(2)
     proj.power_off()
