@@ -326,7 +326,7 @@ class ViewSonicProjector:
         data_byte_length = serial.EIGHTBITS,
         parity_check = serial.PARITY_NONE,
         num_stop_bit: int = serial.STOPBITS_ONE,
-        timeout: Optional[float] = 1.0,
+        timeout: Optional[float] = 5.0,
         write_timeout: Optional[float] = 1.0,
         flow_control: bool = False,
         verbose: bool = False
