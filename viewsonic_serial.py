@@ -376,7 +376,6 @@ class ViewSonicProjector:
         # Wait until the projector has cooled down
         try:
             while True:
-                time.sleep(0.1)
                 res = self.get_projector_status()
                 if res == PowerStatus.COOL_DOWN:
                     time.sleep(1)
