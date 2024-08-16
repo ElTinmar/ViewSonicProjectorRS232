@@ -663,9 +663,11 @@ class ViewSonicProjector:
     def get_remote_key(self) -> int:
         return self._send_read_packet_one_byte(CMD.REMOTE_KEY)   
     
-    def get_operating_temperature(self):
-        #TODO special case
+    def get_operating_temperature(self) -> float:
+        # special case
         response = self._send_read_packet(CMD.OPERATING_TEMPERATURE)
+        temperature = int.from_bytes(response[7:10],byteorder='little')/10
+        return temperature
 
     def cycle_lamp_mode(self):
         self._send_write_packet(CMD.LAMP_MODE_CYCLE + EMPTY)
