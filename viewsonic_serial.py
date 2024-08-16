@@ -363,6 +363,7 @@ class ViewSonicProjector:
         self._send_write_packet(CMD.POWER_ON + EMPTY)
 
         # Wait until the projector has warmed up
+        time.sleep(2)
         while True:
             try:
                 res = self.get_projector_status()
