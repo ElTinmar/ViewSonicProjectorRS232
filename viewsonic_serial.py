@@ -302,7 +302,7 @@ RESPONSE_TWO_BYTE_TO_INT = {v: k for k,v in RESPONSE_INT_TO_TWO_BYTE.items()}
 
 def checksum(packet: bytes) -> bytes:
     '''compute checksum as the sum of bytes 1 to end'''
-    return sum(packet[1:]).to_bytes()
+    return (sum(packet[1:]) % 256).to_bytes()
 
 def payload_length(header: bytes) -> int:
     '''get payload length from header (data + checksum)'''
