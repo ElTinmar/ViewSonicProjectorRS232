@@ -364,6 +364,7 @@ class ViewSonicProjector:
 
         # Wait until the projector has warmed up
         time.sleep(2)
+
         while True:
             try:
                 res = self.get_projector_status()
@@ -757,7 +758,7 @@ class ViewSonicProjector:
 
 def scan(proj: ViewSonicProjector) -> Dict:
     res = {}
-    for cmd2 in range(10,16): 
+    for cmd2 in range(0,30): 
         for cmd3 in range(256):
             cmd = bytes([cmd2, cmd3])
             try:
