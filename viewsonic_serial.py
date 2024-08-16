@@ -648,8 +648,8 @@ class ViewSonicProjector:
     def set_screen_color(self, data: ScreenColor):
         self._send_write_packet(CMD.SCREEN_COLOR + data)
 
-    def get_remote_control_code(self) -> int:
-        return self._send_read_packet_one_byte(CMD.REMOTE_CONTROL_CODE)       
+    def get_screen_color(self) -> int:
+        return self._send_read_packet_one_byte(CMD.SCREEN_COLOR)       
 
     def set_overscan(self, data: OverScan):
         self._send_write_packet(CMD.OVER_SCAN + data)
