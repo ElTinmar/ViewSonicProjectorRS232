@@ -12,14 +12,18 @@ class TransmissionError(Exception):
     pass
 
 class HEADER:
+    '''
+    5-bytes headers for read/write queries and device responses.
+    I added part of the payload to the headers when it never changes.
+    '''
     NUM_BYTES = 5
-    WRITE = b'\x06\x14\x00\x04\x00\x34'
-    READ = b'\x07\x14\x00\x05\x00\x34\x00\x00'
-    READ_RESPONSE_ONE_BYTE = b'\x05\x14\x00\x03\x00\x00\x00'
-    READ_RESPONSE_TWO_BYTE = b'\x05\x14\x00\x04\x00\x00\x00'
-    ACK = b'\x03\x14\x00\x00\x00\x14'
-    DISABLED = b'\x00\x14\x00\x00\x00\x14'
-    PROJ_OFF = b'\x00\x00\x00\x00\x00\x00'
+    WRITE = b'\x06\x14\x00\x04\x00' + b'\x34'
+    READ = b'\x07\x14\x00\x05\x00' + b'\x34\x00\x00'
+    READ_RESPONSE_ONE_BYTE = b'\x05\x14\x00\x03\x00' + b'\x00\x00'
+    READ_RESPONSE_TWO_BYTE = b'\x05\x14\x00\x04\x00' + b'\x00\x00'
+    ACK = b'\x03\x14\x00\x00\x00' + b'\x14'
+    DISABLED = b'\x00\x14\x00\x00\x00' + b'\x14'
+    PROJ_OFF = b'\x00\x00\x00\x00\x00' + b'\x00'
 
 class CMD:
     POWER_ON = b'\x11\x00'
@@ -286,10 +290,11 @@ def checksum(packet: bytes) -> bytes:
     return sum(packet[1:]).to_bytes()
 
 def payload_length(header: bytes) -> int:
-    '''get payload length from header'''
+    '''get payload length from header (data + checksum)'''
     lsb = header[3]
     msb = header[4]
-    return lsb + (msb << 8)
+    ck = 1
+    return lsb + (msb << 8) + ck
 
 class ViewSonicProjector:
     '''
