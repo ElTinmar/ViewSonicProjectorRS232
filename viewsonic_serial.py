@@ -760,9 +760,10 @@ def scan(proj: ViewSonicProjector) -> Dict:
         for cmd3 in range(256):
             cmd = bytes([cmd2, cmd3])
             try:
-                res[cmd] = proj._send_read_packet(cmd)
+                response = proj._send_read_packet(cmd)
             except FunctionDisabled:
-                res[cmd] = b''
+                response = b''
+            res[cmd.hex(' ')] = response.hex(' ')
     return res    
 
 def reverse_engineer(proj: ViewSonicProjector):
