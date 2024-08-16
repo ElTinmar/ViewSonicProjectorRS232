@@ -608,8 +608,10 @@ class ViewSonicProjector:
         self._send_write_packet(CMD.LIGHT_SOURCE_USAGE_TIME + EMPTY)
 
     def get_light_source_usage_time(self):
-        #TODO special case
+        # special case
         response = self._send_read_packet(CMD.LIGHT_SOURCE_USAGE_TIME)
+        usage_time = int.from_bytes(response[7:11],byteorder='little')
+        return usage_time
 
     def set_HDMI_format(self, data: HDMIFormat):
         self._send_write_packet(CMD.HDMI_FORMAT + data)
@@ -630,8 +632,15 @@ class ViewSonicProjector:
         return self._send_read_packet_one_byte(CMD.CEC)
     
     def get_error_status(self):
-        #TODO special case
+        # special case
         response = self._send_read_packet(CMD.ERROR_STATUS)
+        error_status = response[7:32]
+        undocumented_error_array = error_status[0:18] 
+        first_burn_in = int.from_bytes(error_status[18:22], byteorder='little')
+        lamp_status = error_status[22]
+        lamp_error_status = error_status[23:25]
+        return (undocumented_error_array, first_burn_in, lamp_status, lamp_error_status)
+
     
     def set_brilliant_color(self, data: BrilliantColor):
         self._send_write_packet(CMD.BRILLIANT_COLOR + data)
@@ -666,7 +675,7 @@ class ViewSonicProjector:
     def get_operating_temperature(self) -> float:
         # special case
         response = self._send_read_packet(CMD.OPERATING_TEMPERATURE)
-        temperature = int.from_bytes(response[7:10],byteorder='little')/10
+        temperature = int.from_bytes(response[7:11],byteorder='little')/10
         return temperature
 
     def cycle_lamp_mode(self):
