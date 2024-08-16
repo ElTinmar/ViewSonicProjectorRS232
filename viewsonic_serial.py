@@ -844,6 +844,9 @@ class ViewSonicProjector:
 
     def _send_packet(self, packet: bytes) -> bytes:
 
+        self.ser.reset_input_buffer()
+        self.ser.reset_output_buffer()
+
         query = packet + checksum(packet)
 
         if self.verbose:
