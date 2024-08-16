@@ -31,13 +31,13 @@ class HEADER:
 class CMD:
     REMOTE_KEY = b'\x02\x04'
 
-    # X = b'\x05\xca'
+    GAMMA = b'\x05\xca'
     
     # X = b'\x0c\x00'
     # X = b'\x0c\x01'
     # X = b'\x0c\x03'
     # X = b'\x0c\x04'
-    # X = b'\x0c\x08'
+    RESET_TO_FACTORY_DEFAULT = b'\x0c\x08'
     # X = b'\x0c\x09'
     # X = b'\x0c\x0a'
     # X = b'\x0c\x0c'
@@ -81,11 +81,15 @@ class CMD:
     HDMI_RANGE = b'\x11\x29'
     RESET_COLOR_SETTINGS = b'\x11\x2a'
     CEC = b'\x11\x2b'
+    EOTF = b'\x11\x2c'
+    FRAME_INTERPOLATION = b'\x11\x2d'
     KEYSTONE_HORIZONTAL = b'\x11\x31'
     SCREEN_COLOR = b'\x11\x32'
     OVER_SCAN = b'\x11\x33'
-    # X = b'\x11\x39'
-    # X = b'\x11\x3a'
+    PROJ_360 = b'\x11\x36'
+    LENS_FOCUS = b'\x11\x37'
+    DIGITAL_LENS_SHIFT_VERTICAL = b'\x11\x39'
+    DIGITAL_LENS_SHIFT_HORIZONTAL = b'\x11\x3a'
 
     PROJECTOR_POSITION = b'\x12\x00'
     CONTRAST =  b'\x12\x02'
@@ -115,14 +119,18 @@ class CMD:
     COLOR_MODE_CYCLE = b'\x13\x33'
     ISF_MODE = b'\x12\x38'
     HDR = b'\x12\x39'
-    # X = b'\x12\x3a'
-    # X = b'\x12\x3b'
-    # X = b'\x12\x3c'
-    # X = b'\x12\x3d'
-    # X = b'\x12\x3e'
-    # X = b'\x12\x3f'
-    # X = b'\x12\x40'
-    # X = b'\x12\x41'
+    COLOR_TEMPERATURE_RED_GAIN_ADJUST = b'\x12\x3a\x00' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
+    COLOR_TEMPERATURE_GREEN_GAIN_ADJUST = b'\x12\x3a\x01' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
+    COLOR_TEMPERATURE_BLUE_GAIN_ADJUST = b'\x12\x3a\x02' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
+    COLOR_TEMPERATURE_RED_GAIN = b'\x12\x3b'
+    COLOR_TEMPERATURE_GREEN_GAIN = b'\x12\x3c'
+    COLOR_TEMPERATURE_BLUE_GAIN = b'\x12\x3d'
+    COLOR_TEMPERATURE_RED_OFFSET_ADJUST = b'\x12\x3e\x00' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
+    COLOR_TEMPERATURE_GREEN_OFFSET_ADJUST = b'\x12\x3e\x01' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
+    COLOR_TEMPERATURE_BLUE_OFFSET_ADJUST = b'\x12\x3e\x02' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
+    COLOR_TEMPERATURE_RED_OFFSET = b'\x12\x3f'
+    COLOR_TEMPERATURE_GREEN_OFFSET = b'\x12\x40'
+    COLOR_TEMPERATURE_BLUE_OFFSET = b'\x12\x41'
     # X = b'\x12\x50'
     # X = b'\x12\x51'
 
@@ -137,7 +145,7 @@ class CMD:
     VOLUME_UP = b'\x14\x01'
     VOLUME_DOWN = b'\x14\x02'
     VOLUME = b'\x14\x03' # check that 
-    # X = b'\x14\x05'
+    AUDIO_MODE = b'\x14\x05'
 
     LANGUAGE = b'\x15\x00'
     LIGHT_SOURCE_USAGE_TIME = b'\x15\x01'
@@ -162,7 +170,24 @@ class CMD:
     # X = b'\x16\xa3'
     # X = b'\x16\xa4'
 
+    # X = b'\x40\x87'
+    # X = b'\x40\x89'
+
 EMPTY = b'\x00'
+
+class Gamma:
+    GAMMA_1_8 = b'0x00'
+    GAMMA_2 = b'0x01'
+    GAMMA_2_2 = b'0x02'
+    GAMMA_2_35 = b'0x03'
+    GAMMA_2_5 = b'0x04'
+    GAMMA_sRGB = b'0x05'
+    GAMMA_Cubic = b'0x06'
+
+class AudioMode:
+    MOVIE = b'0x04'
+    MUSIC = b'0x05'
+    USER = b'0x06'
 
 class PowerStatus:
     '''
@@ -221,6 +246,13 @@ class AspectRatio:
     AR_2_35_TO_1 = b'\x07'
     AR_PANORAMA = b'\x08'
     AR_NATIVE = b'\x09'
+
+# TODO
+class CornerAdjust:
+    TOP_RIGHT = b''
+    TOP_LEFT = b''
+    BOTTOM_RIGHT = b''
+    BOTTOM_LEFT = b''
 
 class HorizontalPosition:
     SHIFT_LEFT = b'\x00'
@@ -363,6 +395,12 @@ class RemoteKey:
     ENTER = b'\x15'
     AUTO = b'\x08'
     MY_BUTTON = b'\x11'
+    BLUETOOTH = b'\x26'
+    RETURN = b'\x27'
+    NEXT_TRACK = b'\x28'
+    PREVIOUS_TRACK = b'\x29'
+    PLAY = b'\x2a'
+    SUB_MENU = b'\x2b'
 
 RESPONSE_INT_TO_ONE_BYTE = {
     i: HEADER.READ_RESPONSE_ONE_BYTE + bytes([i, (0x17 + i) % 256]) for i in range(256)
@@ -475,7 +513,19 @@ class ViewSonicProjector:
                 break
             else:
                 raise ValueError 
+            
+    def set_gamma(self, data: Gamma):
+        self._send_write_packet(CMD.GAMMA + data)
 
+    def get_gamma(self) -> int:
+        return self._send_read_packet_one_byte(CMD.GAMMA)
+
+    def set_audio_mode(self, data: AudioMode):
+        self._send_write_packet(CMD.AUDIO_MODE + data)
+
+    def get_audio_mode(self) -> int:
+        return self._send_read_packet_one_byte(CMD.AUDIO_MODE)
+    
     def get_power_status(self) -> int:
         return self._send_read_packet_one_byte(CMD.POWER_ON)
     
