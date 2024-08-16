@@ -1,6 +1,8 @@
 import serial
 import time
 from typing import Optional, Dict
+import os
+import json
 
 class TransmissionError(Exception):
     pass
@@ -899,18 +901,39 @@ class ViewSonicProjector:
         response = self._send_read_packet(packet)
         return RESPONSE_TWO_BYTE_TO_INT[response]
 
+SCANFILE = 'scan.json'
 
 def scan(proj: ViewSonicProjector) -> Dict:
+
     res = {}
-    #for cmd2 in range(0,30):
-    for cmd2 in range(256): 
-        for cmd3 in range(256):
-            cmd = bytes([cmd2, cmd3])
+
+    if os.path.exists(SCANFILE):
+
+        with open(SCANFILE,'r') as f:
+            commands = json.load(f)
+
+        for hex in commands.keys():
+            cmd = bytes.fromhex(hex)
             try:
                 response = proj._send_read_packet(cmd)
                 res[cmd.hex(' ')] = response.hex(' ')
             except FunctionDisabled:
                 pass
+
+    else:
+
+        for cmd2 in range(256): 
+            for cmd3 in range(256):
+                cmd = bytes([cmd2, cmd3])
+                try:
+                    response = proj._send_read_packet(cmd)
+                    res[cmd.hex(' ')] = response.hex(' ')
+                except FunctionDisabled:
+                    pass
+        
+        with open(SCANFILE,'w') as f:
+            commands = json.dump(res,f)
+        
     return res    
 
 def reverse_engineer(proj: ViewSonicProjector):
@@ -920,6 +943,7 @@ def reverse_engineer(proj: ViewSonicProjector):
        - exhaustive scan of cmd2/cmd3 space using read query
        - check which values have changed (hopefully only one, but some OSD settings might alter several registers at once)
     '''
+
     
     scan1 = scan(proj)
     input('Change function on the projector using OSD. Press Enter when done')
