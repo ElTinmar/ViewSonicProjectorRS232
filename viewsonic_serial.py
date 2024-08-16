@@ -2,7 +2,7 @@ import serial
 import time
 from typing import Optional, Dict
 
-class InvalidChecksum(Exception):
+class TransmissionError(Exception):
     pass
 
 class FunctionDisabled(Exception):
@@ -681,15 +681,25 @@ class ViewSonicProjector:
             print('>> ' + query.decode())
 
         self.ser.write(query)
+
         response_header = self.ser.read(HEADER.NUM_BYTES)
-        response_payload = self.ser.read(payload_length(response_header))
+        
+        if len(response_header) != HEADER.NUM_BYTES:
+            raise TransmissionError('failed to read response header')
+        
+        payload_num_bytes = payload_length(response_header)
+        response_payload = self.ser.read(payload_num_bytes)
+
+        if len(response_payload) != payload_num_bytes:
+            raise TransmissionError('payload size mismatch')
+
         response = response_header + response_payload
 
         if self.verbose:
             print(response.decode() + '\n')
         
         if checksum(response[:-1]) != response[-1]:
-            raise InvalidChecksum('invalid checksum')
+            raise TransmissionError('invalid checksum')
 
         if response == HEADER.DISABLED:
             raise FunctionDisabled
