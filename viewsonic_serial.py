@@ -773,12 +773,29 @@ class ViewSonicProjector:
     def get_error_status(self):
         # special case
         response = self._send_read_packet(CMD.ERROR_STATUS)
-        error_status = response[7:32]
-        undocumented_error_array = error_status[0:18] 
-        first_burn_in = int.from_bytes(error_status[18:22], byteorder='little')
-        lamp_status = error_status[22]
-        lamp_error_status = error_status[23:25]
-        return (undocumented_error_array, first_burn_in, lamp_status, lamp_error_status)
+        error_status = response[7:31]
+        err = {}
+        err['lamp_fail_count'] = error_status[0]
+        err['lamp_lit_error_count'] = error_status[1]
+        err['fan1_error_count'] = error_status[2]
+        err['fan2_error_count'] = error_status[3]
+        err['fan3_error_count'] = error_status[4]
+        err['fan4_error_count'] = error_status[5]
+        err['diode1_open_error_count'] = error_status[6]
+        err['diode2_open_error_count'] = error_status[7]
+        err['diode1_short_error_count'] = error_status[8]
+        err['diode2_short_error_count'] = error_status[9]
+        err['temperature1_error_count'] = error_status[10]
+        err['temperature2_error_count'] = error_status[11]
+        err['fan_IC1_error_count'] = error_status[12]
+        err['color_wheel_error_count'] = error_status[13]
+        err['color_wheel_startup_error_count'] = error_status[14]
+        err['UART1_error_count'] = error_status[15]
+        err['abnormal_powerdown'] = error_status[16]
+        err['first_burn_in'] = int.from_bytes(error_status[17:21], byteorder='little')
+        err['lamp_status'] = error_status[21]
+        err['lamp_error_status'] = error_status[22:24]
+        return err
 
     
     def set_brilliant_color(self, data: BrilliantColor):
