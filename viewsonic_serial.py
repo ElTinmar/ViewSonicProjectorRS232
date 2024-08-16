@@ -320,7 +320,8 @@ class ViewSonicProjector:
         data_byte_length = serial.EIGHTBITS,
         parity_check = serial.PARITY_NONE,
         num_stop_bit: int = serial.STOPBITS_ONE,
-        timeout: Optional[float] = None,
+        timeout: Optional[float] = 1.0,
+        write_timeout: Optional[float] = 1.0,
         flow_control: bool = False,
         verbose: bool = False
         ):
@@ -334,6 +335,7 @@ class ViewSonicProjector:
         self.parity_check = parity_check
         self.num_stop_bit = num_stop_bit
         self.timeout = timeout
+        self.write_timeout = write_timeout
         self.flow_control = flow_control
         self.verbose = verbose
 
@@ -344,6 +346,7 @@ class ViewSonicProjector:
             parity = parity_check,
             stopbits = num_stop_bit,
             timeout = timeout,
+            write_timeout= write_timeout,
             rtscts = flow_control
         )
 
@@ -679,10 +682,6 @@ class ViewSonicProjector:
             print('>> ' + query.decode())
 
         self.ser.write(query)
-
-        if self.timeout is not None:
-            time.sleep(0.2)  # Short delay to allow for data to be received
-
         response_header = self.ser.read(HEADER.NUM_BYTES)
         response_payload = self.ser.read(payload_length(response_header))
         response = response_header + response_payload
