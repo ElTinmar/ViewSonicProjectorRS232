@@ -291,9 +291,9 @@ def checksum(packet: bytes) -> bytes:
 
 def payload_length(header: bytes) -> int:
     '''get payload length from header (data + checksum)'''
-    lsb = header[3]
+    lsb = header[3] 
     msb = header[4]
-    ck = 1
+    ck = 1 # 1-byte checksum at the end
     return lsb + (msb << 8) + ck
 
 class ViewSonicProjector:
