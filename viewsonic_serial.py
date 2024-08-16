@@ -2,7 +2,7 @@ import serial
 import time
 from typing import Optional, Dict
 
-class TransmissionError(Exception):
+class InvalidChecksum(Exception):
     pass
 
 class FunctionDisabled(Exception):
@@ -691,7 +691,7 @@ class ViewSonicProjector:
             print(response.decode() + '\n')
         
         if checksum(response[:-1]) != response[-1]:
-            raise TransmissionError('invalid checksum')
+            raise InvalidChecksum('invalid checksum')
 
         if response == HEADER.DISABLED:
             raise FunctionDisabled
@@ -704,7 +704,7 @@ class ViewSonicProjector:
     def _send_write_packet(self, packet: bytes):
 
         response = self._send_packet(HEADER.WRITE + packet)
-        
+
         if response != HEADER.ACK:
             raise CommandFailed
 
