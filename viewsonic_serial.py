@@ -747,7 +747,19 @@ class ViewSonicProjector:
     def _send_read_packet_two_byte(self, packet: bytes) -> int:
 
         response = self._send_read_packet(packet)
-        return RESPONSE_TWO_BYTE_TO_INT[response] 
+        return RESPONSE_TWO_BYTE_TO_INT[response]
+
+
+def scan(proj: ViewSonicProjector) -> Dict:
+    res = {}
+    for cmd2 in range(10,16): 
+        for cmd3 in range(256):
+            cmd = bytes([cmd2, cmd3])
+            try:
+                res[cmd] = proj._send_read_packet(cmd)
+            except FunctionDisabled:
+                res[cmd] = b''
+    return res    
 
 def reverse_engineer(proj: ViewSonicProjector):
     '''reverse engineer command codes
@@ -756,21 +768,10 @@ def reverse_engineer(proj: ViewSonicProjector):
        - exhaustive scan of cmd2/cmd3 space using read query
        - check which values have changed (hopefully only one, but some OSD settings might alter several registers at once)
     '''
-
-    def scan() -> Dict:
-        res = {}
-        for cmd2 in range(10,16): 
-            for cmd3 in range(256):
-                cmd = bytes([cmd2, cmd3])
-                try:
-                    res[cmd] = proj._send_read_packet(cmd)
-                except FunctionDisabled:
-                    res[cmd] = b''
-        return res
     
-    scan1 = scan()
+    scan1 = scan(proj)
     input('Change function on the projector using OSD. Press Enter when done')
-    scan2 = scan()
+    scan2 = scan(proj)
     diff = set(scan1.items()) ^ set(scan2.items()) 
     return diff
     
