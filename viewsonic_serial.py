@@ -695,7 +695,7 @@ class ViewSonicProjector:
         query = packet + checksum(packet)
 
         if self.verbose:
-            print('>> ' + query.decode())
+            print('>> ' + query.hex(' '))
 
         self.ser.write(query)
 
@@ -713,7 +713,8 @@ class ViewSonicProjector:
         response = response_header + response_payload
 
         if self.verbose:
-            print(response.decode() + '\n')
+            print(response.hex(' '))
+            print()
         
         if checksum(response[:-1]) != response[-1]:
             raise TransmissionError('invalid checksum')
