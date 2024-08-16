@@ -1,12 +1,6 @@
 import serial
 import time
-from typing import Optional 
-
-# TODO: reverse engineer command codes
-#   - exhaustive scan of cmd2/cmd3 space using read query (should be safe)
-#   - modify setting with projector OSD
-#   - exhaustive scan of cmd2/cmd3 space using read query
-#   - check which values have changed (hopefully only one, but some OSD settings might alter several registers at once)
+from typing import Optional, Dict
 
 class TransmissionError(Exception):
     pass
@@ -704,6 +698,28 @@ class ViewSonicProjector:
         response = self._send_read_packet(packet)
         return RESPONSE_TWO_BYTE_TO_INT[response] 
 
+def reverse_engineer(proj: ViewSonicProjector):
+    '''reverse engineer command codes
+       - exhaustive scan of cmd2/cmd3 space using read query (should be safe)
+       - modify setting with projector OSD
+       - exhaustive scan of cmd2/cmd3 space using read query
+       - check which values have changed (hopefully only one, but some OSD settings might alter several registers at once)
+    '''
+
+    def scan() -> Dict:
+        res = {}
+        for cmd2 in range(256):
+            for cmd3 in range(256):
+                cmd = bytes([cmd2, cmd3])
+                res[cmd] = proj._send_read_packet(cmd)
+        return res
+    
+    scan1 = scan()
+    input('Change function on the projector using OSD. Press Enter when done')
+    scan2 = scan()
+    diff = set(scan1.items()) ^ set(scan2.items()) 
+    return diff
+    
 if __name__ == '__main__':
 
     proj = ViewSonicProjector(verbose=True)
