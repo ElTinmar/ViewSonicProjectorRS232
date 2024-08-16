@@ -716,7 +716,7 @@ class ViewSonicProjector:
             print(response.hex(' '))
             print()
         
-        if checksum(response[:-1]) != response[-1]:
+        if checksum(response[:-1]) != response[-1:]:
             raise TransmissionError('invalid checksum')
 
         if response == HEADER.DISABLED:
