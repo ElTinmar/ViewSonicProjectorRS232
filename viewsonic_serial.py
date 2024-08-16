@@ -5,6 +5,9 @@ from typing import Optional, Dict
 class TransmissionError(Exception):
     pass
 
+class FunctionDisabled(Exception):
+    pass
+
 class HEADER:
     '''
     5-bytes headers for read/write queries and device responses.
@@ -77,6 +80,12 @@ class CMD:
     #FAST_INPUT_MODE = b'\x00\x00'
 
 EMPTY = b'\x00'
+
+class PowerStatus:
+    WARM_UP = 1
+    COOL_DOWN = 3
+    ON = 2
+    OFF = 0
 
 class Bool:
     OFF = b'\x00'
@@ -337,21 +346,38 @@ class ViewSonicProjector:
 
     def power_on(self):
         self._send_write_packet(CMD.POWER_ON + EMPTY)
-        warmup = True
-        while warmup:
-            time.sleep(0.1)
-            res = self.get_projector_status()
-            if res == 2:
-                break 
+
+        # Wait until the projector has warmed up
+        try:
+            while True:
+                res = self.get_projector_status()
+                if res == PowerStatus.WARM_UP:
+                    time.sleep(1)
+                elif res == PowerStatus.ON:
+                    break 
+                else:
+                    raise ValueError
+
+        except FunctionDisabled:
+            pass
     
     def power_off(self):
         self._send_write_packet(CMD.POWER_OFF + EMPTY)
-        cooldown = True
-        while cooldown:
-            time.sleep(0.1)
-            res = self.get_projector_status()
-            if res == 0:
-                break 
+
+        # Wait until the projector has cooled down
+        try:
+            while True:
+                time.sleep(0.1)
+                res = self.get_projector_status()
+                if res == PowerStatus.COOL_DOWN:
+                    time.sleep(1)
+                elif res == PowerStatus.OFF:
+                    break
+                else:
+                    raise ValueError 
+
+        except FunctionDisabled:
+            pass
 
     def get_power_status(self) -> int:
         return self._send_read_packet_one_byte(CMD.POWER_ON)
@@ -647,7 +673,10 @@ class ViewSonicProjector:
             print('>> ' + query.decode())
 
         self.ser.write(query)
-        time.sleep(0.1)  # Short delay to allow for data to be received
+
+        if self.timeout is not None:
+            time.sleep(0.1)  # Short delay to allow for data to be received
+
         response_header = self.ser.read(HEADER.NUM_BYTES)
         response_payload = self.ser.read(payload_length(response_header))
         response = response_header + response_payload
@@ -708,7 +737,7 @@ def reverse_engineer(proj: ViewSonicProjector):
 
     def scan() -> Dict:
         res = {}
-        for cmd2 in range(256):
+        for cmd2 in range(10,16): 
             for cmd3 in range(256):
                 cmd = bytes([cmd2, cmd3])
                 res[cmd] = proj._send_read_packet(cmd)
