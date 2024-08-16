@@ -760,5 +760,5 @@ if __name__ == '__main__':
 
     proj = ViewSonicProjector(verbose=True)
     proj.power_on()
-    time.sleep(2)
+    time.sleep(20)
     proj.power_off()
