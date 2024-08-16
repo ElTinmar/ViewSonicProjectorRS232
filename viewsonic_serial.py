@@ -88,6 +88,12 @@ class CMD:
 EMPTY = b'\x00'
 
 class PowerStatus:
+    '''
+    Power On: System is finished all HW/FW settings and ready to work.
+    Warm Up: System is at initial stage to set and check HW/FW environment. Please do not perform other commands.
+    Cool Down: System is at final stage to close HW/FW environment. Please do not perform other commands.
+    Power Off: System is turned off all HW/FW except MCU or LAN functions with LAN standy setting.
+    '''
     WARM_UP = 1
     COOL_DOWN = 3
     ON = 2
