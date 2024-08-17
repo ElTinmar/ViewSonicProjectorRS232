@@ -198,9 +198,9 @@ class PowerStatus:
     Cool Down: System is at final stage to close HW/FW environment. Please do not perform other commands.
     Power Off: System is turned off all HW/FW except MCU or LAN functions with LAN standy setting.
     '''
-    WARM_UP = 1
+    WARM_UP = 2
     COOL_DOWN = 3
-    ON = 2
+    ON = 1
     OFF = 0
 
 class Bool:
@@ -484,7 +484,7 @@ class ViewSonicProjector:
 
         while True:
             try:
-                res = self.get_projector_status()
+                res = self.get_power_status()
             except FunctionDisabled:
                 break
             except ProjectorOFF:
@@ -505,7 +505,7 @@ class ViewSonicProjector:
         # Wait until the projector has cooled down
         while True:
             try:
-                res = self.get_projector_status()
+                res = self.get_power_status()
             except FunctionDisabled:
                 break
 
