@@ -487,7 +487,7 @@ class ViewSonicProjector:
             res = self.get_power_status()
                 
             if res in [PowerStatus.OFF, PowerStatus.WARM_UP]:
-                time.sleep(1)
+                time.sleep(5)
 
             elif res == PowerStatus.ON:
                 break
@@ -507,7 +507,7 @@ class ViewSonicProjector:
             res = self.get_power_status()
 
             if res in [PowerStatus.ON, PowerStatus.COOL_DOWN]:
-                time.sleep(1)
+                time.sleep(5)
 
             elif res == PowerStatus.OFF:
                 break
