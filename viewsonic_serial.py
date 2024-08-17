@@ -477,6 +477,11 @@ class ViewSonicProjector:
         self.ser.close()
 
     def power_on(self):
+        '''
+        Turn the projector on and wait for the projector to warm up.
+        No command can be sent while the projector is warming up.
+        '''
+
         self._send_write_packet(CMD.POWER_ON + EMPTY)
         
         # leave some time for the projector to turn on
@@ -497,6 +502,10 @@ class ViewSonicProjector:
 
     
     def power_off(self):
+        '''
+        Turn the projector off and wait for the projector to cool down.
+        No command can be sent while the projector is cooling down.
+        '''
         self._send_write_packet(CMD.POWER_OFF + EMPTY)
 
         # leave some time for the projector to turn off
@@ -797,7 +806,6 @@ class ViewSonicProjector:
         err['lamp_status'] = error_status[21]
         err['lamp_error_status'] = error_status[22:24]
         return err
-
     
     def set_brilliant_color(self, data: BrilliantColor):
         self._send_write_packet(CMD.BRILLIANT_COLOR + data)
