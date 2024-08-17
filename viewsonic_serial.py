@@ -950,7 +950,6 @@ def reverse_engineer(proj: ViewSonicProjector):
        - check which values have changed (hopefully only one, but some OSD settings might alter several registers at once)
     '''
 
-    
     scan1 = scan(proj)
     input('Change function on the projector using OSD. Press Enter when done')
     scan2 = scan(proj)
