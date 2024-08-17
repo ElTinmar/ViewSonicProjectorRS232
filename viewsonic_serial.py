@@ -479,22 +479,15 @@ class ViewSonicProjector:
     def power_on(self):
         self._send_write_packet(CMD.POWER_ON + EMPTY)
 
-        # Wait until the projector has warmed up
-        time.sleep(2)
-
         while True:
-            try:
-                res = self.get_power_status()
-            except FunctionDisabled:
-                break
-            except ProjectorOFF:
-                time.sleep(1)
-                continue
+            res = self.get_power_status()
                 
             if res == PowerStatus.WARM_UP:
                 time.sleep(1)
+
             elif res == PowerStatus.ON:
-                break 
+                break
+
             else:
                 raise ValueError
 
@@ -504,15 +497,14 @@ class ViewSonicProjector:
 
         # Wait until the projector has cooled down
         while True:
-            try:
-                res = self.get_power_status()
-            except FunctionDisabled:
-                break
+            res = self.get_power_status()
 
             if res == PowerStatus.COOL_DOWN:
                 time.sleep(1)
+
             elif res == PowerStatus.OFF:
                 break
+            
             else:
                 raise ValueError 
             
