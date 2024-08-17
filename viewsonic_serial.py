@@ -478,7 +478,11 @@ class ViewSonicProjector:
 
     def power_on(self):
         self._send_write_packet(CMD.POWER_ON + EMPTY)
+        
+        # leave some time for the projector to turn on
+        time.sleep(5)
 
+        # make sure the projector is warmed up
         while True:
             res = self.get_power_status()
                 
@@ -494,6 +498,9 @@ class ViewSonicProjector:
     
     def power_off(self):
         self._send_write_packet(CMD.POWER_OFF + EMPTY)
+
+        # leave some time for the projector to turn off
+        time.sleep(5)
 
         # Wait until the projector has cooled down
         while True:
