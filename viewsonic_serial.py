@@ -482,7 +482,7 @@ class ViewSonicProjector:
         while True:
             res = self.get_power_status()
                 
-            if res == PowerStatus.WARM_UP:
+            if res in [PowerStatus.OFF, PowerStatus.WARM_UP]:
                 time.sleep(1)
 
             elif res == PowerStatus.ON:
@@ -499,12 +499,12 @@ class ViewSonicProjector:
         while True:
             res = self.get_power_status()
 
-            if res == PowerStatus.COOL_DOWN:
+            if res in [PowerStatus.ON, PowerStatus.COOL_DOWN]:
                 time.sleep(1)
 
             elif res == PowerStatus.OFF:
                 break
-            
+
             else:
                 raise ValueError 
             
