@@ -57,8 +57,8 @@ class CMD:
     # X = b'\x0c\x03'
     # X = b'\x0c\x04'
     RESET_TO_FACTORY_DEFAULT = b'\x0c\x08'
-    # X = b'\x0c\x09'
-    # X = b'\x0c\x0a'
+    SERIAL_NUMBER = b'\x0c\x09' 
+    PROJECTOR_MODEL = b'\x0c\x0a'
     # X = b'\x0c\x0c'
     ERROR_STATUS =  b'\x0c\x0d'
     UNKNOWN_STATUS_INFO = b'\x0c\x0f' # changes with time, contains 8 bytes of info, maybe a counter or something 
@@ -74,7 +74,7 @@ class CMD:
     # X = b'\x0c\x4f'
     # X = b'\x0c\x50'
     # X = b'\x0c\x51'
-    # X = b'\x0c\x53'
+    SILENCE_MODE = b'\x0c\x53'
     FAST_INPUT_MODE = b'\x0c\x54' 
     # X = b'\x0c\x60'
     # X = b'\x0c\x8e'
@@ -550,6 +550,18 @@ class ViewSonicProjector:
             else:
                 raise ValueError 
             
+    def get_serial_number(self):
+        response = self._send_read_packet(CMD.SERIAL_NUMBER)
+        data_length = payload_length(response) - 2
+        data = response[-data_length:-1]
+        return data.decode('ascii').replace('\x00', '')
+    
+    def get_model(self):
+        response = self._send_read_packet(CMD.PROJECTOR_MODEL)
+        data_length = payload_length(response) - 2
+        data = response[-data_length:-1]
+        return data.decode('ascii').replace('\x00', '')
+            
     def set_gamma(self, data: Gamma):
         self._send_write_packet_one_byte(CMD.GAMMA + data)
 
@@ -575,7 +587,10 @@ class ViewSonicProjector:
         self._send_write_packet_one_byte(CMD.RESET_COLOR_SETTINGS + EMPTY)
 
     def set_splash_screen(self, data: SplashScreen):
-        self._send_write_packet_one_byte(CMD.RESET_COLOR_SETTINGS + data)
+        self._send_write_packet_one_byte(CMD.SPLASH_SCREEN + data)
+
+    def get_splash_screen(self):
+        self._send_read_packet_one_byte(CMD.SPLASH_SCREEN)
 
     def set_quick_poweroff(self, data: Bool):
         self._send_write_packet_one_byte(CMD.QUICK_POWEROFF + data)
@@ -815,6 +830,12 @@ class ViewSonicProjector:
 
     def get_mute(self) -> int:
         return self._send_read_packet_one_byte(CMD.MUTE)
+
+    def set_silence_mode(self, data: Bool):
+        self._send_write_packet_one_byte(CMD.SILENCE_MODE + data)
+
+    def get_silence_mode(self) -> int:
+        return self._send_read_packet_one_byte(CMD.SILENCE_MODE)
     
     def volume_up(self):
         self._send_write_packet_one_byte(CMD.VOLUME_UP + EMPTY)
