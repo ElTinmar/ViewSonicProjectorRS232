@@ -171,14 +171,14 @@ class CMD:
     OPERATING_TEMPERATURE = b'\x15\x03'
     # X = b'\x15\x0a'
     # X = b'\x15\x42' # changed with fast input mode, warping enable, auto_v_keystone -> opposite CORNER_ADJ OR KEYSTONE ?
-    # X = b'\x15\x43'
+    FIRMWARE_VERSION = b'\x15\x43' # V1.03B maybe firmware version
     # X = b'\x15\x44'
     # X = b'\x15\x45'
     # X = b'\x15\x49'
 
     # X = b'\x16\x01'
     # X = b'\x16\x40'
-    # X = b'\x16\x41'
+    # X = b'\x16\x41' ALSO PROJECTOR MODEL IN ASCII?
     # X = b'\x16\x8a'
     # X = b'\x16\x8b'
     # X = b'\x16\x8c' maybe CORNER_ADJUST_ENABLE
@@ -454,6 +454,11 @@ def payload_length(header: bytes) -> int:
     ck = 1 # 1-byte checksum at the end
     return lsb + (msb << 8) + ck
 
+def ascii_string(response: bytes) -> str:
+    data_start = payload_length(response) - 2
+    data = response[-data_start:-1]
+    return data.decode('ascii').replace('\x00', '')
+
 class ViewSonicProjector:
     '''
     Requires a crossover (null modem) cable for use with PC
@@ -552,15 +557,15 @@ class ViewSonicProjector:
             
     def get_serial_number(self):
         response = self._send_read_packet(CMD.SERIAL_NUMBER)
-        data_start = payload_length(response) - 2
-        data = response[-data_start:-1]
-        return data.decode('ascii').replace('\x00', '')
+        return ascii_string(response)
     
     def get_model(self):
         response = self._send_read_packet(CMD.PROJECTOR_MODEL)
-        data_start = payload_length(response) - 2
-        data = response[-data_start:-1]
-        return data.decode('ascii').replace('\x00', '')
+        return ascii_string(response)
+    
+    def get_firmware_version(self):
+        response = self._send_read_packet(CMD.FIRMWARE_VERSION)
+        return ascii_string(response)
             
     def set_gamma(self, data: Gamma):
         self._send_write_packet_one_byte(CMD.GAMMA + data)
