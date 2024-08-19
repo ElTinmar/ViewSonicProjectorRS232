@@ -51,6 +51,11 @@ class HEADER:
 # KEYSTONE_ROTATION up and down
 # CORNER_ADJUST
 # set BRIGHTNESS/CONTRAST/... writing one byte give an increment of n: -> 2*n -1
+# AUTO_POWER_ON: Signal
+# SLEEP_TIMER
+# POWER_SAVING
+# POWER_ON_SOURCE 
+# POWER_ON_OFF_RING_TONE_ENABLE
 
 class CMD:
     REMOTE_KEY = b'\x02\x04'
@@ -75,7 +80,7 @@ class CMD:
     AUTO_V_KEYSTONE = b'\x0c\x34'
     # X = b'\x0c\x35'
     REMOTE_CONTROL_CODE = b'\x0c\x48'
-    # X = b'\x0c\x4c'
+    AUTO_POWER_OFF = b'\x0c\x4c'
     # X = b'\x0c\x4f'
     # X = b'\x0c\x50'
     # X = b'\x0c\x51'
@@ -186,10 +191,10 @@ class CMD:
     # X = b'\x16\x41' ALSO PROJECTOR MODEL IN ASCII?
     # X = b'\x16\x8a'
     # X = b'\x16\x8b'
-    # X = b'\x16\x8c' maybe CORNER_ADJUST_ENABLE
-    # X = b'\x16\x8d'
+    # X = b'\x16\x8c' 
+    # X = b'\x16\x8d' activated by test pattern value 12
     # X = b'\x16\x8e'
-    # X = b'\x16\x8f'
+    DIRECT_POWER_ON = b'\x16\x8f' #Allows the projector to turn on automatically once power is fed through the power cord.
     # X = b'\x16\x99'
     # X = b'\x16\xa3'
     # X = b'\x16\xa4'
@@ -198,6 +203,12 @@ class CMD:
     # X = b'\x40\x89'
 
 EMPTY = b'\x00'
+
+class AutoPowerOff:
+    DISABLE = b'\x00'
+    THIRTY_MIN = b'\x03'
+    TWENTY_MIN = b'\x02'
+    TEN_MIN = b'\x01'
 
 class WarpingControlMode:
     OSD = b'\x00'
@@ -216,6 +227,7 @@ class AudioMode:
     MOVIE = b'\x04'
     MUSIC = b'\x05'
     USER = b'\x06'
+    SPEECH = b'\x01'
 
 class PowerStatus:
     '''
@@ -249,6 +261,9 @@ class LightSourceMode:
     ECO = b'\x01'
     DYNAMIC_ECO = b'\x02'
     SUPER_ECO = b'\x03'
+    DYNAMIC_BLACK_1 = b'\x09'
+    DYNAMIC_BLACK_2 = b'\x0a'
+    CUSTOM = b'\x06'
 
 class ProjectorPosition:
     FRONT_TABLE = b'\x00'
@@ -299,6 +314,13 @@ class CornerAdjust:
     BOTTOM_RIGHT = b''
     BOTTOM_LEFT = b''
 
+# TODO
+class PowerOnSource:
+    DISABLE = b''
+    HDMI_1 = b''
+    HDMI_2 = b''
+    USB_C = b''
+
 class HorizontalPosition:
     SHIFT_LEFT = b'\x00'
     SHIFT_RIGHT = b'\x01'
@@ -346,12 +368,12 @@ class PrimaryColor:
     Y = b'\x05'
 
 class SourceInput:
-    D_SUB_COMP1 = b'\x00'
-    D_SUB_COMP2 = b'\x08'
-    HDMI1 = b'\x03'
-    HDMI2 = b'\x07'
-    HDMI3 = b'\x09'
-    HDMI_MHL4 = b'\x0e'
+    D_SUB_COMP_1 = b'\x00'
+    D_SUB_COMP_2 = b'\x08'
+    HDMI_1 = b'\x03'
+    HDMI_2 = b'\x07'
+    HDMI_3 = b'\x09'
+    HDMI_MHL_4 = b'\x0e'
     COMPOSITE = b'\x05'
     S_VIDEO = b'\x06'
     DVI = b'\x0a'
@@ -782,6 +804,12 @@ class ViewSonicProjector:
 
     def get_color_mode(self) -> int:
         return self._send_read_packet_one_byte(CMD.COLOR_MODE)
+
+    def set_auto_power_off(self, data: AutoPowerOff):
+        self._send_write_packet_one_byte(CMD.AUTO_POWER_OFF + data)
+
+    def get_auto_power_off(self) -> int:
+        return self._send_read_packet_one_byte(CMD.AUTO_POWER_OFF)
     
     def cycle_color_mode(self):
         self._send_write_packet_one_byte(CMD.COLOR_MODE_CYCLE + EMPTY)
@@ -871,6 +899,12 @@ class ViewSonicProjector:
     def get_silence_mode(self) -> int:
         return self._send_read_packet_one_byte(CMD.SILENCE_MODE)
     
+    def set_panel_key_lock(self, data: Bool):
+        self._send_write_packet_one_byte(CMD.PANEL_KEY_LOCK + data)
+
+    def get_panel_key_lock(self) -> int:
+        return self._send_read_packet_one_byte(CMD.PANEL_KEY_LOCK)
+    
     def volume_up(self):
         self._send_write_packet_one_byte(CMD.VOLUME_UP + EMPTY)
 
@@ -878,9 +912,9 @@ class ViewSonicProjector:
         self._send_write_packet_one_byte(CMD.VOLUME_DOWN + EMPTY)
 
     # CHECK THIS, THE DOC IS WEIRD 
-    # is it setting the volume to eleven ? 
+    # is it setting the volume to 17 ? 
     # should I supply an integer ? 
-    # What's the volume range ?
+    # What's the volume range ? [0-20]
     def set_volume(self):
         self._send_write_packet_one_byte(CMD.VOLUME + b'\x11')
 
