@@ -47,6 +47,11 @@ class HEADER:
     DISABLED = b'\x00\x14\x00\x00\x00' + b'\x14'
     PROJ_OFF = b'\x00\x00\x00\x00\x00' + b'\x00'
 
+# TODO COMMANDS I NEED TO FIND
+# KEYSTONE_ROTATION up and down
+# CORNER_ADJUST
+# set BRIGHTNESS/CONTRAST/... writing one byte give an increment of n: -> 2*n -1
+
 class CMD:
     REMOTE_KEY = b'\x02\x04'
 
@@ -151,7 +156,7 @@ class CMD:
     COLOR_TEMPERATURE_GREEN_OFFSET = b'\x12\x40'
     COLOR_TEMPERATURE_BLUE_OFFSET = b'\x12\x41'
     WARPING_ENABLE = b'\x12\x50'
-    # X = b'\x12\x51'
+    WARPING_CONTROL_MODE = b'\x12\x51'
 
     FREEZE =  b'\x13\x00'
     SOURCE_INPUT = b'\x13\x01'
@@ -193,6 +198,10 @@ class CMD:
     # X = b'\x40\x89'
 
 EMPTY = b'\x00'
+
+class WarpingControlMode:
+    OSD = b'\x00'
+    RS232 = b'\x01'
 
 class Gamma:
     GAMMA_1_8 = b'\x00'
@@ -300,9 +309,10 @@ class VerticalPosition:
 
 class ColorTemperature:
     WARM = b'\x00'
-    NORMAL = b'\x01'
-    NEUTRAL = b'\x02'
+    NORMAL_6500K = b'\x01'
+    NEUTRAL_7500K = b'\x02'
     COOL = b'\x03'
+    VERY_COOL_9300K = b'\x04'
 
 class ColorMode:
     BRIGHTEST = b'\x00'
@@ -573,6 +583,12 @@ class ViewSonicProjector:
     def get_gamma(self) -> int:
         return self._send_read_packet_one_byte(CMD.GAMMA)
 
+    def set_warping_control_mode(self, data: WarpingControlMode):
+        self._send_write_packet_one_byte(CMD.WARPING_CONTROL_MODE + data)
+
+    def get_warping_control_mode(self) -> int:
+        return self._send_read_packet_one_byte(CMD.WARPING_CONTROL_MODE)
+    
     def set_audio_mode(self, data: AudioMode):
         self._send_write_packet_one_byte(CMD.AUDIO_MODE + data)
 
@@ -786,24 +802,37 @@ class ViewSonicProjector:
         self._send_write_packet_one_byte(CMD.PRIMARY_COLOR + data)
 
     def get_primary_color(self) -> int:
+        # select primary color before you adjust hue/saturation/gain
         return self._send_read_packet_one_byte(CMD.PRIMARY_COLOR)
 
     def adjust_hue(self, data: Adjustment):
+        # set primary color before you adjust hue/saturation/gain  
+        # for that color
         self._send_write_packet_one_byte(CMD.HUE_TINT + data)
 
     def get_hue(self) -> int:
+        # set primary color before you adjust hue/saturation/gain  
+        # for that color
         return self._send_read_packet_two_byte(CMD.HUE_TINT)
 
     def adjust_saturation(self, data: Adjustment):
+        # set primary color before you adjust hue/saturation/gain  
+        # for that color
         self._send_write_packet_one_byte(CMD.SATURATION + data)
 
     def get_saturation(self) -> int:
+        # set primary color before you adjust hue/saturation/gain  
+        # for that color
         return self._send_read_packet_two_byte(CMD.SATURATION)
 
     def adjust_gain(self, data: Adjustment):
+        # set primary color before you adjust hue/saturation/gain  
+        # for that color
         self._send_write_packet_one_byte(CMD.GAIN + data)
 
     def get_gain(self) -> int:
+        # set primary color before you adjust hue/saturation/gain  
+        # for that color
         return self._send_read_packet_two_byte(CMD.GAIN)
     
     def adjust_sharpness(self, data: Adjustment):
