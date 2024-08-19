@@ -552,14 +552,14 @@ class ViewSonicProjector:
             
     def get_serial_number(self):
         response = self._send_read_packet(CMD.SERIAL_NUMBER)
-        data_length = payload_length(response) - 2
-        data = response[-data_length:-1]
+        data_start = payload_length(response) - 2
+        data = response[-data_start:-1]
         return data.decode('ascii').replace('\x00', '')
     
     def get_model(self):
         response = self._send_read_packet(CMD.PROJECTOR_MODEL)
-        data_length = payload_length(response) - 2
-        data = response[-data_length:-1]
+        data_start = payload_length(response) - 2
+        data = response[-data_start:-1]
         return data.decode('ascii').replace('\x00', '')
             
     def set_gamma(self, data: Gamma):
