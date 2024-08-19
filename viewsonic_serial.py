@@ -16,13 +16,30 @@ class ProjectorOFF(Exception):
 class CommandFailed(Exception):
     pass
 
+def int_to_two_bytes(i: int) -> bytes:
+    if i >= 0:
+        b = bytes([i, 0x00])
+    else:
+        b = bytes([i + 256, 0xFF])
+    return b
+
+def two_bytes_to_int(b: bytes) -> int:
+    if b[-1] == 0:
+        i = b[0]
+    elif b[-1] == 255:
+        i = b[0] - 256
+    else:
+        raise ValueError('Invalid format')
+    return i
+
 class HEADER:
     '''
     5-bytes headers for read/write queries and device responses.
     I added part of the command payload to the headers when it never changes.
     '''
     NUM_BYTES = 5
-    WRITE = b'\x06\x14\x00\x04\x00' + b'\x34'
+    WRITE_ONE_BYTE = b'\x06\x14\x00\x04\x00' + b'\x34'
+    WRITE_TWO_BYTE = b'\x06\x14\x00\x05\x00' + b'\x34'
     READ = b'\x07\x14\x00\x05\x00' + b'\x34\x00\x00'
     READ_RESPONSE_ONE_BYTE = b'\x05\x14\x00\x03\x00' + b'\x00\x00'
     READ_RESPONSE_TWO_BYTE = b'\x05\x14\x00\x04\x00' + b'\x00\x00'
@@ -44,13 +61,13 @@ class CMD:
     # X = b'\x0c\x0a'
     # X = b'\x0c\x0c'
     ERROR_STATUS =  b'\x0c\x0d'
-    # X = b'\x0c\x0f'
+    UNKNOWN_STATUS_INFO = b'\x0c\x0f' # changes with time, contains 8 bytes of info, maybe a counter or something 
     # X = b'\x0c\x11'
     # X = b'\x0c\x21'
     # X = b'\x0c\x23'
     # X = b'\x0c\x2f'
     # X = b'\x0c\x31'
-    # X = b'\x0c\x34'
+    AUTO_V_KEYSTONE = b'\x0c\x34'
     # X = b'\x0c\x35'
     REMOTE_CONTROL_CODE = b'\x0c\x48'
     # X = b'\x0c\x4c'
@@ -58,7 +75,7 @@ class CMD:
     # X = b'\x0c\x50'
     # X = b'\x0c\x51'
     # X = b'\x0c\x53'
-    # X = b'\x0c\x54'
+    FAST_INPUT_MODE = b'\x0c\x54' 
     # X = b'\x0c\x60'
     # X = b'\x0c\x8e'
     # X = b'\x0c\x9d'
@@ -110,7 +127,7 @@ class CMD:
     HUE_TINT = b'\x12\x11'
     SATURATION = b'\x12\x12'
     GAIN = b'\x12\x13'
-    # X = b'\x12\x16'
+    ZOOM = b'\x12\x16'
     # X = b'\x12\x17'
     # X = b'\x12\x18'
     PROJECTOR_3D_SYNC =  b'\x12\x20'
@@ -121,19 +138,19 @@ class CMD:
     COLOR_MODE_CYCLE = b'\x13\x33'
     ISF_MODE = b'\x12\x38'
     HDR = b'\x12\x39'
-    COLOR_TEMPERATURE_RED_GAIN_ADJUST = b'\x12\x3a\x00' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
-    COLOR_TEMPERATURE_GREEN_GAIN_ADJUST = b'\x12\x3a\x01' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
-    COLOR_TEMPERATURE_BLUE_GAIN_ADJUST = b'\x12\x3a\x02' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
+    COLOR_TEMPERATURE_RED_GAIN_ADJUST = b'\x12\x3a\x00' 
+    COLOR_TEMPERATURE_GREEN_GAIN_ADJUST = b'\x12\x3a\x01'
+    COLOR_TEMPERATURE_BLUE_GAIN_ADJUST = b'\x12\x3a\x02'
     COLOR_TEMPERATURE_RED_GAIN = b'\x12\x3b'
     COLOR_TEMPERATURE_GREEN_GAIN = b'\x12\x3c'
     COLOR_TEMPERATURE_BLUE_GAIN = b'\x12\x3d'
-    COLOR_TEMPERATURE_RED_OFFSET_ADJUST = b'\x12\x3e\x00' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
-    COLOR_TEMPERATURE_GREEN_OFFSET_ADJUST = b'\x12\x3e\x01' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
-    COLOR_TEMPERATURE_BLUE_OFFSET_ADJUST = b'\x12\x3e\x02' #TODO header is b'\x06\x14\x00\x05\x00' + b'\x34'
+    COLOR_TEMPERATURE_RED_OFFSET_ADJUST = b'\x12\x3e\x00' 
+    COLOR_TEMPERATURE_GREEN_OFFSET_ADJUST = b'\x12\x3e\x01' 
+    COLOR_TEMPERATURE_BLUE_OFFSET_ADJUST = b'\x12\x3e\x02' 
     COLOR_TEMPERATURE_RED_OFFSET = b'\x12\x3f'
     COLOR_TEMPERATURE_GREEN_OFFSET = b'\x12\x40'
     COLOR_TEMPERATURE_BLUE_OFFSET = b'\x12\x41'
-    # X = b'\x12\x50'
+    WARPING_ENABLE = b'\x12\x50'
     # X = b'\x12\x51'
 
     FREEZE =  b'\x13\x00'
@@ -153,7 +170,7 @@ class CMD:
     LIGHT_SOURCE_USAGE_TIME = b'\x15\x01'
     OPERATING_TEMPERATURE = b'\x15\x03'
     # X = b'\x15\x0a'
-    # X = b'\x15\x42'
+    # X = b'\x15\x42' # changed with fast input mode, warping enable, auto_v_keystone -> opposite CORNER_ADJ OR KEYSTONE ?
     # X = b'\x15\x43'
     # X = b'\x15\x44'
     # X = b'\x15\x45'
@@ -164,7 +181,7 @@ class CMD:
     # X = b'\x16\x41'
     # X = b'\x16\x8a'
     # X = b'\x16\x8b'
-    # X = b'\x16\x8c'
+    # X = b'\x16\x8c' maybe CORNER_ADJUST_ENABLE
     # X = b'\x16\x8d'
     # X = b'\x16\x8e'
     # X = b'\x16\x8f'
@@ -178,18 +195,18 @@ class CMD:
 EMPTY = b'\x00'
 
 class Gamma:
-    GAMMA_1_8 = b'0x00'
-    GAMMA_2 = b'0x01'
-    GAMMA_2_2 = b'0x02'
-    GAMMA_2_35 = b'0x03'
-    GAMMA_2_5 = b'0x04'
-    GAMMA_sRGB = b'0x05'
-    GAMMA_Cubic = b'0x06'
+    GAMMA_1_8 = b'\x00'
+    GAMMA_2 = b'\x01'
+    GAMMA_2_2 = b'\x02'
+    GAMMA_2_35 = b'\x03'
+    GAMMA_2_5 = b'\x04'
+    GAMMA_sRGB = b'\x05'
+    GAMMA_Cubic = b'\x06'
 
 class AudioMode:
-    MOVIE = b'0x04'
-    MUSIC = b'0x05'
-    USER = b'0x06'
+    MOVIE = b'\x04'
+    MUSIC = b'\x05'
+    USER = b'\x06'
 
 class PowerStatus:
     '''
@@ -249,6 +266,23 @@ class AspectRatio:
     AR_PANORAMA = b'\x08'
     AR_NATIVE = b'\x09'
 
+class Zoom:
+    X_0_8 = int_to_two_bytes(-20)
+    X_0_85 = int_to_two_bytes(-15)
+    X_0_9 = int_to_two_bytes(-10)
+    X_0_95 = int_to_two_bytes(-5)
+    X_1_0 = int_to_two_bytes(0)
+    X_1_1 = int_to_two_bytes(10)
+    X_1_2 = int_to_two_bytes(20)
+    X_1_3 = int_to_two_bytes(30)
+    X_1_4 = int_to_two_bytes(40)
+    X_1_5 = int_to_two_bytes(50)
+    X_1_6 = int_to_two_bytes(60)
+    X_1_7 = int_to_two_bytes(70)
+    X_1_8 = int_to_two_bytes(90)
+    X_1_9 = int_to_two_bytes(90)
+    X_2_0 = int_to_two_bytes(100)
+
 # TODO
 class CornerAdjust:
     TOP_RIGHT = b''
@@ -285,6 +319,9 @@ class ColorMode:
     VIVID = b'\x15'
     ISF_DAY = b'\x16'
     ISF_NIGHT = b'\x17'
+    USER = b'\x18'
+    LOW_BLUE_LIGHT = b'\x1c'
+    TV = b'\x1a'
 
 class HDR:
     AUTO = b'\x00'
@@ -404,18 +441,7 @@ class RemoteKey:
     PLAY = b'\x2a'
     SUB_MENU = b'\x2b'
 
-RESPONSE_INT_TO_ONE_BYTE = {
-    i: HEADER.READ_RESPONSE_ONE_BYTE + bytes([i, (0x17 + i) % 256]) for i in range(256)
-}
-RESPONSE_ONE_BYTE_TO_INT = {v: k for k,v in RESPONSE_INT_TO_ONE_BYTE.items()}
 
-RESPONSE_INT_TO_TWO_BYTE = {
-    i: (HEADER.READ_RESPONSE_TWO_BYTE + bytes([i, 0x00, (0x18 + i) % 256])
-    if i >= 0
-    else HEADER.READ_RESPONSE_TWO_BYTE + bytes([i + 256, 0xFF, (0x17 + i) % 256]))
-    for i in range(-255, 256)
-}
-RESPONSE_TWO_BYTE_TO_INT = {v: k for k,v in RESPONSE_INT_TO_TWO_BYTE.items()}
 
 def checksum(packet: bytes) -> bytes:
     '''compute checksum as the sum of bytes 1 to end'''
@@ -482,7 +508,7 @@ class ViewSonicProjector:
         No command can be sent while the projector is warming up.
         '''
 
-        self._send_write_packet(CMD.POWER_ON + EMPTY)
+        self._send_write_packet_one_byte(CMD.POWER_ON + EMPTY)
         
         # leave some time for the projector to turn on
         time.sleep(5)
@@ -506,7 +532,7 @@ class ViewSonicProjector:
         Turn the projector off and wait for the projector to cool down.
         No command can be sent while the projector is cooling down.
         '''
-        self._send_write_packet(CMD.POWER_OFF + EMPTY)
+        self._send_write_packet_one_byte(CMD.POWER_OFF + EMPTY)
 
         # leave some time for the projector to turn off
         time.sleep(5)
@@ -525,13 +551,13 @@ class ViewSonicProjector:
                 raise ValueError 
             
     def set_gamma(self, data: Gamma):
-        self._send_write_packet(CMD.GAMMA + data)
+        self._send_write_packet_one_byte(CMD.GAMMA + data)
 
     def get_gamma(self) -> int:
         return self._send_read_packet_one_byte(CMD.GAMMA)
 
     def set_audio_mode(self, data: AudioMode):
-        self._send_write_packet(CMD.AUDIO_MODE + data)
+        self._send_write_packet_one_byte(CMD.AUDIO_MODE + data)
 
     def get_audio_mode(self) -> int:
         return self._send_read_packet_one_byte(CMD.AUDIO_MODE)
@@ -543,203 +569,265 @@ class ViewSonicProjector:
         return self._send_read_packet_one_byte(CMD.PROJECTOR_STATUS)
     
     def reset_all_settings(self):
-        self._send_write_packet(CMD.RESET_ALL_SETTINGS + EMPTY)
+        self._send_write_packet_one_byte(CMD.RESET_ALL_SETTINGS + EMPTY)
 
     def reset_color_settings(self):
-        self._send_write_packet(CMD.RESET_COLOR_SETTINGS + EMPTY)
+        self._send_write_packet_one_byte(CMD.RESET_COLOR_SETTINGS + EMPTY)
 
     def set_splash_screen(self, data: SplashScreen):
-        self._send_write_packet(CMD.RESET_COLOR_SETTINGS + data)
+        self._send_write_packet_one_byte(CMD.RESET_COLOR_SETTINGS + data)
 
     def set_quick_poweroff(self, data: Bool):
-        self._send_write_packet(CMD.QUICK_POWEROFF + data)
+        self._send_write_packet_one_byte(CMD.QUICK_POWEROFF + data)
 
     def get_quick_poweroff(self) -> int:
         return self._send_read_packet_one_byte(CMD.QUICK_POWEROFF)
+
+    def set_auto_v_keystone(self, data: Bool):
+        self._send_write_packet_one_byte(CMD.AUTO_V_KEYSTONE + data)
+
+    def get_auto_v_keystone(self) -> int:
+        return self._send_read_packet_one_byte(CMD.AUTO_V_KEYSTONE)
     
+    def set_warping_enable(self, data: Bool):
+        self._send_write_packet_one_byte(CMD.WARPING_ENABLE + data)
+
+    def get_warping_enable(self) -> int:
+        return self._send_read_packet_one_byte(CMD.WARPING_ENABLE)
+    
+    def set_fast_input_mode(self, data: Bool):
+        self._send_write_packet_one_byte(CMD.FAST_INPUT_MODE + data)
+
+    def get_fast_input_mode(self) -> int:
+        return self._send_read_packet_one_byte(CMD.FAST_INPUT_MODE)
+        
     def set_high_altitude_mode(self, data: Bool):
-        self._send_write_packet(CMD.HIGH_ALTITUDE_MODE + data)
+        self._send_write_packet_one_byte(CMD.HIGH_ALTITUDE_MODE + data)
 
     def get_high_altitude_mode(self) -> int:
         return self._send_read_packet_one_byte(CMD.HIGH_ALTITUDE_MODE)
     
     def set_light_source_mode(self, data: LightSourceMode):
-        self._send_write_packet(CMD.LIGHT_SOURCE_MODE + data)
+        self._send_write_packet_one_byte(CMD.LIGHT_SOURCE_MODE + data)
 
     def get_light_source_mode(self) -> int:
         return self._send_read_packet_one_byte(CMD.LIGHT_SOURCE_MODE)
     
+    def set_zoom(self, data: Zoom):
+        self._send_write_packet_two_byte(CMD.ZOOM + data)
+
+    def get_zoom(self) -> int:
+        return self._send_read_packet_two_byte(CMD.ZOOM)
+    
+    #TODO adjust_zoom with +1 -1 increments ?
+    
     def set_message(self, data: Bool):
-        self._send_write_packet(CMD.MESSAGE + data)
+        self._send_write_packet_one_byte(CMD.MESSAGE + data)
 
     def get_message(self) -> int:
         return self._send_read_packet_one_byte(CMD.MESSAGE)
 
     def set_projector_position(self, data: ProjectorPosition):
-        self._send_write_packet(CMD.PROJECTOR_POSITION + data)
+        self._send_write_packet_one_byte(CMD.PROJECTOR_POSITION + data)
 
     def get_projector_position(self) -> int:
         return self._send_read_packet_one_byte(CMD.PROJECTOR_POSITION)
     
     def set_projector_3d_sync(self, data: Projector3DSync):
-        self._send_write_packet(CMD.PROJECTOR_3D_SYNC + data)
+        self._send_write_packet_one_byte(CMD.PROJECTOR_3D_SYNC + data)
 
     def get_projector_3d_sync(self) -> int:
         return self._send_read_packet_one_byte(CMD.PROJECTOR_3D_SYNC)
     
     def set_projector_3d_sync_invert(self, data: Bool):
-        self._send_write_packet(CMD.PROJECTOR_3D_SYNC_INVERT + data)
+        self._send_write_packet_one_byte(CMD.PROJECTOR_3D_SYNC_INVERT + data)
 
     def get_projector_3d_sync_invert(self) -> int:
         return self._send_read_packet_one_byte(CMD.PROJECTOR_3D_SYNC_INVERT)    
     
     def adjust_contrast(self, data: Adjustment):
-        self._send_write_packet(CMD.CONTRAST + data)
+        self._send_write_packet_one_byte(CMD.CONTRAST + data)
 
     def get_contrast(self) -> int:
         return self._send_read_packet_two_byte(CMD.CONTRAST)
  
     def adjust_brightness(self, data: Adjustment):
-        self._send_write_packet(CMD.BRIGHTNESS + data)
+        self._send_write_packet_one_byte(CMD.BRIGHTNESS + data)
 
     def get_brightness(self) -> int:
         return self._send_read_packet_two_byte(CMD.BRIGHTNESS)
     
+    def adjust_color_temperature_red_gain(self, data: Adjustment):
+        self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_RED_GAIN_ADJUST + data)
+
+    def get_color_temperature_red_gain(self) -> int:
+        return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_RED_GAIN)
+
+    def adjust_color_temperature_green_gain(self, data: Adjustment):
+        self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_GREEN_GAIN_ADJUST + data)
+
+    def get_color_temperature_green_gain(self) -> int:
+        return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_GREEN_GAIN)
+    
+    def adjust_color_temperature_blue_gain(self, data: Adjustment):
+        self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_BLUE_GAIN_ADJUST + data)
+
+    def get_color_temperature_blue_gain(self) -> int:
+        return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_BLUE_GAIN)
+
+    def adjust_color_temperature_red_offset(self, data: Adjustment):
+        self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_RED_OFFSET_ADJUST + data)
+
+    def get_color_temperature_red_offset(self) -> int:
+        return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_RED_OFFSET)
+
+    def adjust_color_temperature_green_offset(self, data: Adjustment):
+        self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_GREEN_OFFSET_ADJUST + data)
+
+    def get_color_temperature_green_offset(self) -> int:
+        return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_GREEN_OFFSET)
+    
+    def adjust_color_temperature_blue_offset(self, data: Adjustment):
+        self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_BLUE_OFFSET_ADJUST + data)
+
+    def get_color_temperature_blue_offset(self) -> int:
+        return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_BLUE_OFFSET)
+    
     def set_aspect_ratio(self, data: AspectRatio):
-        self._send_write_packet(CMD.ASPECT_RATIO + data)
+        self._send_write_packet_one_byte(CMD.ASPECT_RATIO + data)
 
     def get_aspect_ratio(self) -> int:
         return self._send_read_packet_one_byte(CMD.ASPECT_RATIO)
     
     def cycle_aspect_ratio(self):
-        self._send_write_packet(CMD.ASPECT_RATIO_CYCLE + EMPTY)
+        self._send_write_packet_one_byte(CMD.ASPECT_RATIO_CYCLE + EMPTY)
 
     def auto_adjust(self):
-        self._send_write_packet(CMD.AUTO_ADJUST + EMPTY)
+        self._send_write_packet_one_byte(CMD.AUTO_ADJUST + EMPTY)
 
     def set_horizontal_position(self, data: HorizontalPosition):
-        self._send_write_packet(CMD.HORIZONTAL_POSITION + data)
+        self._send_write_packet_one_byte(CMD.HORIZONTAL_POSITION + data)
 
     def get_horizontal_position(self) -> int:
         return self._send_read_packet_one_byte(CMD.HORIZONTAL_POSITION)
 
     def set_vertical_position(self, data: VerticalPosition):
-        self._send_write_packet(CMD.VERTICAL_POSITION + data)
+        self._send_write_packet_one_byte(CMD.VERTICAL_POSITION + data)
 
     def get_vertical_position(self) -> int:
         return self._send_read_packet_one_byte(CMD.VERTICAL_POSITION)
 
     def set_color_temperature(self, data: ColorTemperature):
-        self._send_write_packet(CMD.COLOR_TEMPERATURE + data)
+        self._send_write_packet_one_byte(CMD.COLOR_TEMPERATURE + data)
 
     def get_color_temperature(self) -> int:
         return self._send_read_packet_one_byte(CMD.COLOR_TEMPERATURE)
 
     def set_blank(self, data: Bool):
-        self._send_write_packet(CMD.BLANK + data)
+        self._send_write_packet_one_byte(CMD.BLANK + data)
 
     def get_blank(self) -> int:
         return self._send_read_packet_one_byte(CMD.BLANK)
 
     def adjust_vertical_keystone(self, data: Adjustment):
-        self._send_write_packet(CMD.KEYSTONE_VERTICAL + data)
+        self._send_write_packet_one_byte(CMD.KEYSTONE_VERTICAL + data)
 
     def get_vertical_keystone(self) -> int:
         return self._send_read_packet_one_byte(CMD.KEYSTONE_VERTICAL)
 
     def adjust_horizontal_keystone(self, data: Adjustment):
-        self._send_write_packet(CMD.KEYSTONE_HORIZONTAL + data)
+        self._send_write_packet_one_byte(CMD.KEYSTONE_HORIZONTAL + data)
 
     def get_horizontal_keystone(self) -> int:
         return self._send_read_packet_one_byte(CMD.KEYSTONE_HORIZONTAL)
 
     def set_color_mode(self, data: ColorMode):
-        self._send_write_packet(CMD.COLOR_MODE + data)
+        self._send_write_packet_one_byte(CMD.COLOR_MODE + data)
 
     def get_color_mode(self) -> int:
         return self._send_read_packet_one_byte(CMD.COLOR_MODE)
     
     def cycle_color_mode(self):
-        self._send_write_packet(CMD.COLOR_MODE_CYCLE + EMPTY)
+        self._send_write_packet_one_byte(CMD.COLOR_MODE_CYCLE + EMPTY)
 
     def set_ISF_mode(self, data: Bool):
-        self._send_write_packet(CMD.ISF_MODE + data)
+        self._send_write_packet_one_byte(CMD.ISF_MODE + data)
 
     def get_ISF_mode(self) -> int:
         return self._send_read_packet_one_byte(CMD.ISF_MODE)
 
     def set_HDR(self, data: HDR):
-        self._send_write_packet(CMD.HDR + data)
+        self._send_write_packet_one_byte(CMD.HDR + data)
 
     def get_HDR(self) -> int:
         return self._send_read_packet_one_byte(CMD.HDR)
 
     def set_primary_color(self, data: PrimaryColor):
-        self._send_write_packet(CMD.PRIMARY_COLOR + data)
+        self._send_write_packet_one_byte(CMD.PRIMARY_COLOR + data)
 
     def get_primary_color(self) -> int:
         return self._send_read_packet_one_byte(CMD.PRIMARY_COLOR)
 
     def adjust_hue(self, data: Adjustment):
-        self._send_write_packet(CMD.HUE_TINT + data)
+        self._send_write_packet_one_byte(CMD.HUE_TINT + data)
 
     def get_hue(self) -> int:
         return self._send_read_packet_two_byte(CMD.HUE_TINT)
 
     def adjust_saturation(self, data: Adjustment):
-        self._send_write_packet(CMD.SATURATION + data)
+        self._send_write_packet_one_byte(CMD.SATURATION + data)
 
     def get_saturation(self) -> int:
         return self._send_read_packet_two_byte(CMD.SATURATION)
 
     def adjust_gain(self, data: Adjustment):
-        self._send_write_packet(CMD.GAIN + data)
+        self._send_write_packet_one_byte(CMD.GAIN + data)
 
     def get_gain(self) -> int:
         return self._send_read_packet_two_byte(CMD.GAIN)
     
     def adjust_sharpness(self, data: Adjustment):
-        self._send_write_packet(CMD.SHARPNESS + data)
+        self._send_write_packet_one_byte(CMD.SHARPNESS + data)
 
     def get_sharpness(self) -> int:
         return self._send_read_packet_two_byte(CMD.SHARPNESS)
 
     def set_freeze(self, data: Bool):
-        self._send_write_packet(CMD.FREEZE + data)
+        self._send_write_packet_one_byte(CMD.FREEZE + data)
 
     def get_freeze(self) -> int:
         return self._send_read_packet_one_byte(CMD.FREEZE)
 
     def set_source_input(self, data: SourceInput):
-        self._send_write_packet(CMD.SOURCE_INPUT + data)
+        self._send_write_packet_one_byte(CMD.SOURCE_INPUT + data)
 
     def get_source_input(self) -> int:
         return self._send_read_packet_one_byte(CMD.SOURCE_INPUT)        
 
     def set_quick_autosearch(self, data: Bool):
-        self._send_write_packet(CMD.QUICK_AUTO_SEARCH + data)
+        self._send_write_packet_one_byte(CMD.QUICK_AUTO_SEARCH + data)
 
     def get_quick_autosearch(self) -> int:
         return self._send_read_packet_one_byte(CMD.QUICK_AUTO_SEARCH)
 
     def set_mute(self, data: Bool):
-        self._send_write_packet(CMD.MUTE + data)
+        self._send_write_packet_one_byte(CMD.MUTE + data)
 
     def get_mute(self) -> int:
         return self._send_read_packet_one_byte(CMD.MUTE)
     
     def volume_up(self):
-        self._send_write_packet(CMD.VOLUME_UP + EMPTY)
+        self._send_write_packet_one_byte(CMD.VOLUME_UP + EMPTY)
 
     def volume_down(self):
-        self._send_write_packet(CMD.VOLUME_DOWN + EMPTY)
+        self._send_write_packet_one_byte(CMD.VOLUME_DOWN + EMPTY)
 
     # CHECK THIS, THE DOC IS WEIRD 
     # is it setting the volume to eleven ? 
     # should I supply an integer ? 
     # What's the volume range ?
     def set_volume(self):
-        self._send_write_packet(CMD.VOLUME + b'\x11')
+        self._send_write_packet_one_byte(CMD.VOLUME + b'\x11')
 
     def get_volume(self):
         return self._send_read_packet_one_byte(CMD.VOLUME)
@@ -748,13 +836,13 @@ class ViewSonicProjector:
         return self._send_read_packet_two_byte(CMD.SHARPNESS)
 
     def set_language(self, data: Language):
-        self._send_write_packet(CMD.LANGUAGE + data)
+        self._send_write_packet_one_byte(CMD.LANGUAGE + data)
 
     def get_language(self) -> int:
         return self._send_read_packet_one_byte(CMD.LANGUAGE)    
         
     def reset_light_source_usage_time(self):
-        self._send_write_packet(CMD.LIGHT_SOURCE_USAGE_TIME + EMPTY)
+        self._send_write_packet_one_byte(CMD.LIGHT_SOURCE_USAGE_TIME + EMPTY)
 
     def get_light_source_usage_time(self):
         # special case
@@ -763,19 +851,19 @@ class ViewSonicProjector:
         return usage_time
 
     def set_HDMI_format(self, data: HDMIFormat):
-        self._send_write_packet(CMD.HDMI_FORMAT + data)
+        self._send_write_packet_one_byte(CMD.HDMI_FORMAT + data)
 
     def get_HDMI_format(self) -> int:
         return self._send_read_packet_one_byte(CMD.HDMI_FORMAT)           
 
     def set_HDMI_range(self, data: HDMIRange):
-        self._send_write_packet(CMD.HDMI_RANGE + data)
+        self._send_write_packet_one_byte(CMD.HDMI_RANGE + data)
 
     def get_HDMI_range(self) -> int:
         return self._send_read_packet_one_byte(CMD.HDMI_RANGE)
 
     def set_CEC(self, data: Bool):
-        self._send_write_packet(CMD.CEC + data)
+        self._send_write_packet_one_byte(CMD.CEC + data)
 
     def get_CEC(self) -> int:
         return self._send_read_packet_one_byte(CMD.CEC)
@@ -808,31 +896,31 @@ class ViewSonicProjector:
         return err
     
     def set_brilliant_color(self, data: BrilliantColor):
-        self._send_write_packet(CMD.BRILLIANT_COLOR + data)
+        self._send_write_packet_one_byte(CMD.BRILLIANT_COLOR + data)
 
     def get_brilliant_color(self) -> int:
         return self._send_read_packet_one_byte(CMD.BRILLIANT_COLOR)       
 
     def set_remote_control_code(self, data: RemoteControlCode):
-        self._send_write_packet(CMD.REMOTE_CONTROL_CODE + data)
+        self._send_write_packet_one_byte(CMD.REMOTE_CONTROL_CODE + data)
 
     def get_remote_control_code(self) -> int:
         return self._send_read_packet_one_byte(CMD.REMOTE_CONTROL_CODE)       
 
     def set_screen_color(self, data: ScreenColor):
-        self._send_write_packet(CMD.SCREEN_COLOR + data)
+        self._send_write_packet_one_byte(CMD.SCREEN_COLOR + data)
 
     def get_screen_color(self) -> int:
         return self._send_read_packet_one_byte(CMD.SCREEN_COLOR)       
 
     def set_overscan(self, data: OverScan):
-        self._send_write_packet(CMD.OVER_SCAN + data)
+        self._send_write_packet_one_byte(CMD.OVER_SCAN + data)
 
     def get_overscan(self) -> int:
         return self._send_read_packet_one_byte(CMD.OVER_SCAN)       
 
     def set_remote_key(self, data: RemoteKey):
-        self._send_write_packet(CMD.REMOTE_KEY + data)
+        self._send_write_packet_one_byte(CMD.REMOTE_KEY + data)
 
     def get_remote_key(self) -> int:
         return self._send_read_packet_one_byte(CMD.REMOTE_KEY)   
@@ -844,10 +932,10 @@ class ViewSonicProjector:
         return temperature
 
     def cycle_lamp_mode(self):
-        self._send_write_packet(CMD.LAMP_MODE_CYCLE + EMPTY)
+        self._send_write_packet_one_byte(CMD.LAMP_MODE_CYCLE + EMPTY)
 
     def cycle_audio_mode(self):
-        self._send_write_packet(CMD.AUDIO_MODE_CYCLE + EMPTY)
+        self._send_write_packet_one_byte(CMD.AUDIO_MODE_CYCLE + EMPTY)
 
     def _send_packet(self, packet: bytes) -> bytes:
 
@@ -889,13 +977,20 @@ class ViewSonicProjector:
 
         return response
 
-    def _send_write_packet(self, packet: bytes):
+    def _send_write_packet_one_byte(self, packet: bytes):
 
-        response = self._send_packet(HEADER.WRITE + packet)
+        response = self._send_packet(HEADER.WRITE_ONE_BYTE + packet)
 
         if response != HEADER.ACK:
             raise CommandFailed
 
+    def _send_write_packet_two_byte(self, packet: bytes):
+
+        response = self._send_packet(HEADER.WRITE_TWO_BYTE + packet)
+
+        if response != HEADER.ACK:
+            raise CommandFailed
+        
     def _send_read_packet(self, packet: bytes) -> bytes:
 
         response = self._send_packet(HEADER.READ + packet)
@@ -903,13 +998,15 @@ class ViewSonicProjector:
 
     def _send_read_packet_one_byte(self, packet: bytes) -> int:
 
-        response = self._send_read_packet(packet)        
-        return RESPONSE_ONE_BYTE_TO_INT[response]
+        response = self._send_read_packet(packet) 
+        data = response[-2]      
+        return data
     
     def _send_read_packet_two_byte(self, packet: bytes) -> int:
 
         response = self._send_read_packet(packet)
-        return RESPONSE_TWO_BYTE_TO_INT[response]
+        data = response[-3:-1]
+        return two_bytes_to_int(data)
 
 SCANFILE = 'scan.json'
 
@@ -925,6 +1022,10 @@ def scan(proj: ViewSonicProjector) -> Dict:
             commands = json.load(f)
 
         for hex in commands.keys():
+            
+            if hex in [CMD.OPERATING_TEMPERATURE, CMD.UNKNOWN_STATUS_INFO]:
+                continue
+
             cmd = bytes.fromhex(hex)
             try:
                 response = proj._send_read_packet(cmd)
