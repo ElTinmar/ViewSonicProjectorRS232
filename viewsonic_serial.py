@@ -569,7 +569,7 @@ class ViewSonicProjector:
         self._send_write_packet_one_byte(CMD.POWER_ON + EMPTY)
         
         # leave some time for the projector to turn on
-        time.sleep(5)
+        time.sleep(10)
 
         # make sure the projector is warmed up
         while True:
@@ -593,7 +593,7 @@ class ViewSonicProjector:
         self._send_write_packet_one_byte(CMD.POWER_OFF + EMPTY)
 
         # leave some time for the projector to turn off
-        time.sleep(5)
+        time.sleep(10)
 
         # Wait until the projector has cooled down
         while True:
@@ -1238,6 +1238,24 @@ def reverse_engineer(proj: ViewSonicProjector):
     diff = set(scan1.items()) ^ set(scan2.items()) 
     return diff
     
+def set_fast_mode(proj: ViewSonicProjector) -> None:
+    # somehow this seems to be a bit unreliable
+    
+    if proj.get_power_status() == PowerStatus.OFF:
+        proj.power_on()
+        time.sleep(20)
+    proj.reset_all_settings()
+    time.sleep(20)
+    proj.set_mute(Bool.ON)
+    time.sleep(0.1)
+    proj.set_source_input(SourceInput.HDMI_1)
+    time.sleep(20)
+    proj.set_fast_input_mode(Bool.ON)
+    time.sleep(20)
+    
+    if proj.get_fast_input_mode() == 0:
+        raise RuntimeError('failed to set to fast mode')
+
 if __name__ == '__main__':
 
     proj = ViewSonicProjector(verbose=True)
