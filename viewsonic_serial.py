@@ -50,7 +50,7 @@ class HEADER:
 # TODO COMMANDS I NEED TO FIND
 # KEYSTONE_ROTATION up and down
 # CORNER_ADJUST
-# set BRIGHTNESS/CONTRAST/... writing one byte give an increment of n: -> 2*n -1
+# set BRIGHTNESS/CONTRAST/... writing one byte give an increment of n: -> 2*n -1 : find a way to directly set value, or read value and run through all the increments to get there
 # AUTO_POWER_ON: Signal
 # SLEEP_TIMER
 # POWER_SAVING
