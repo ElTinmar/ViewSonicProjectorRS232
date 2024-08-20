@@ -180,7 +180,7 @@ class CMD:
     LIGHT_SOURCE_USAGE_TIME = b'\x15\x01'
     OPERATING_TEMPERATURE = b'\x15\x03'
     # X = b'\x15\x0a'
-    # X = b'\x15\x42' # changed with fast input mode, warping enable, auto_v_keystone -> opposite CORNER_ADJ OR KEYSTONE ?
+    # X = b'\x15\x42' # changed with aspect_ratio, fast input mode, warping enable, auto_v_keystone -> opposite CORNER_ADJ OR KEYSTONE ?
     FIRMWARE_VERSION = b'\x15\x43' # V1.03B maybe firmware version
     # X = b'\x15\x44'
     # X = b'\x15\x45'
