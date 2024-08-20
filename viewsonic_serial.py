@@ -1198,7 +1198,7 @@ def scan(proj: ViewSonicProjector) -> Dict:
 
         for hex in commands.keys():
             
-            if hex in [CMD.OPERATING_TEMPERATURE, CMD.UNKNOWN_STATUS_INFO]:
+            if hex in [CMD.OPERATING_TEMPERATURE.hex(' '), CMD.UNKNOWN_STATUS_INFO.hex(' ')]:
                 continue
 
             cmd = bytes.fromhex(hex)
