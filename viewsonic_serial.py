@@ -697,9 +697,7 @@ class ViewSonicProjector:
 
     def get_zoom(self) -> int:
         return self._send_read_packet_two_byte(CMD.ZOOM)
-    
-    #TODO adjust_zoom with +1 -1 increments ?
-    
+        
     def set_message(self, data: Bool):
         self._send_write_packet_one_byte(CMD.MESSAGE + data)
 
