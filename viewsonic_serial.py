@@ -1,6 +1,6 @@
 import serial
 import time
-from typing import Optional, Dict
+from typing import Optional, Dict, Callable
 import os
 import json
 
@@ -474,7 +474,6 @@ class RemoteKey:
     SUB_MENU = b'\x2b'
 
 
-
 def checksum(packet: bytes) -> bytes:
     '''compute checksum as the sum of bytes 1 to end'''
     return (sum(packet[1:]) % 256).to_bytes()
@@ -490,6 +489,27 @@ def ascii_string(response: bytes) -> str:
     data_start = payload_length(response) - 2
     data = response[-data_start:-1]
     return data.decode('ascii').replace('\x00', '')
+
+
+def set_value_by_increment(
+        read_fun: Callable[[], int], 
+        increment_fun: Callable[[Adjustment], None], 
+        desired_value: int
+    ) -> None:
+
+    # get number of steps and sign
+    current_value = read_fun()
+    steps = desired_value - current_value
+    step_type = Adjustment.DECREASE if steps < 0 else Adjustment.INCREASE
+
+    # iterate increments/decrements until value is reached 
+    for i in range(abs(steps)):
+        increment_fun(step_type)
+    
+    # check we have the proper value
+    final_value = read_fun()
+    if final_value != desired_value:
+        raise RuntimeError('failed to set value')
 
 class ViewSonicProjector:
     '''
