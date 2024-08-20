@@ -47,7 +47,7 @@ class HEADER:
     DISABLED = b'\x00\x14\x00\x00\x00' + b'\x14'
     PROJ_OFF = b'\x00\x00\x00\x00\x00' + b'\x00'
 
-# TODO COMMANDS I NEED TO FIND
+# TODO COMMANDS I NEED TO FIND -------------
 # KEYSTONE_ROTATION up and down
 # CORNER_ADJUST
 # set BRIGHTNESS/CONTRAST/... writing one byte give an increment of n: -> 2*n -1 : find a way to directly set value, or read value and run through all the increments to get there
