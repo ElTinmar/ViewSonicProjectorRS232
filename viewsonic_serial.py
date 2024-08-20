@@ -728,6 +728,9 @@ class ViewSonicProjector:
 
     def get_contrast(self) -> int:
         return self._send_read_packet_two_byte(CMD.CONTRAST)
+    
+    def set_contrast(self, value: int):
+        set_value_by_increment(self.get_contrast, self.adjust_contrast, value)
  
     def adjust_brightness(self, data: Adjustment):
         self._send_write_packet_one_byte(CMD.BRIGHTNESS + data)
