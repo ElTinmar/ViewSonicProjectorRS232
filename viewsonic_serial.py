@@ -505,6 +505,7 @@ def set_value_by_increment(
     # iterate increments/decrements until value is reached 
     for i in range(abs(steps)):
         increment_fun(step_type)
+        time.sleep(0.1) # give the projector some time to process the requests
     
     # check we have the proper value
     final_value = read_fun()
@@ -738,23 +739,47 @@ class ViewSonicProjector:
     def get_brightness(self) -> int:
         return self._send_read_packet_two_byte(CMD.BRIGHTNESS)
     
+    def set_brightness(self, value: int):
+        set_value_by_increment(self.get_brightness, self.adjust_brightness, value)
+
     def adjust_color_temperature_red_gain(self, data: Adjustment):
         self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_RED_GAIN_ADJUST + data)
 
     def get_color_temperature_red_gain(self) -> int:
         return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_RED_GAIN)
+    
+    def set_color_temperature_red_gain(self, value: int):
+        set_value_by_increment(
+            self.get_color_temperature_red_gain, 
+            self.adjust_color_temperature_red_gain, 
+            value
+        )
 
     def adjust_color_temperature_green_gain(self, data: Adjustment):
         self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_GREEN_GAIN_ADJUST + data)
 
     def get_color_temperature_green_gain(self) -> int:
         return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_GREEN_GAIN)
-    
+
+    def set_color_temperature_green_gain(self, value: int):
+        set_value_by_increment(
+            self.get_color_temperature_green_gain, 
+            self.adjust_color_temperature_green_gain, 
+            value
+        )
+
     def adjust_color_temperature_blue_gain(self, data: Adjustment):
         self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_BLUE_GAIN_ADJUST + data)
 
     def get_color_temperature_blue_gain(self) -> int:
         return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_BLUE_GAIN)
+    
+    def set_color_temperature_blue_gain(self, value: int):
+        set_value_by_increment(
+            self.get_color_temperature_blue_gain, 
+            self.adjust_color_temperature_blue_gain, 
+            value
+        )
 
     def adjust_color_temperature_red_offset(self, data: Adjustment):
         self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_RED_OFFSET_ADJUST + data)
@@ -762,17 +787,38 @@ class ViewSonicProjector:
     def get_color_temperature_red_offset(self) -> int:
         return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_RED_OFFSET)
 
+    def set_color_temperature_red_offset(self, value: int):
+        set_value_by_increment(
+            self.get_color_temperature_red_offset, 
+            self.adjust_color_temperature_red_offset, 
+            value
+        )
+
     def adjust_color_temperature_green_offset(self, data: Adjustment):
         self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_GREEN_OFFSET_ADJUST + data)
 
     def get_color_temperature_green_offset(self) -> int:
         return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_GREEN_OFFSET)
-    
+
+    def set_color_temperature_green_offset(self, value: int):
+        set_value_by_increment(
+            self.get_color_temperature_green_offset, 
+            self.adjust_color_temperature_green_offset, 
+            value
+        )
+
     def adjust_color_temperature_blue_offset(self, data: Adjustment):
         self._send_write_packet_two_byte(CMD.COLOR_TEMPERATURE_BLUE_OFFSET_ADJUST + data)
 
     def get_color_temperature_blue_offset(self) -> int:
         return self._send_read_packet_two_byte(CMD.COLOR_TEMPERATURE_BLUE_OFFSET)
+
+    def set_color_temperature_blue_offset(self, value: int):
+        set_value_by_increment(
+            self.get_color_temperature_blue_offset, 
+            self.adjust_color_temperature_blue_offset, 
+            value
+        )
     
     def set_aspect_ratio(self, data: AspectRatio):
         self._send_write_packet_one_byte(CMD.ASPECT_RATIO + data)
@@ -815,12 +861,18 @@ class ViewSonicProjector:
 
     def get_vertical_keystone(self) -> int:
         return self._send_read_packet_one_byte(CMD.KEYSTONE_VERTICAL)
+    
+    def set_vertical_keystone(self, value: int):
+        set_value_by_increment(self.get_vertical_keystone, self.adjust_vertical_keystone, value)
 
     def adjust_horizontal_keystone(self, data: Adjustment):
         self._send_write_packet_one_byte(CMD.KEYSTONE_HORIZONTAL + data)
 
     def get_horizontal_keystone(self) -> int:
         return self._send_read_packet_one_byte(CMD.KEYSTONE_HORIZONTAL)
+
+    def set_horizontal_keystone(self, value: int):
+        set_value_by_increment(self.get_horizontal_keystone, self.adjust_horizontal_keystone, value)
 
     def set_color_mode(self, data: ColorMode):
         self._send_write_packet_one_byte(CMD.COLOR_MODE + data)
@@ -865,6 +917,9 @@ class ViewSonicProjector:
         # set primary color before you adjust hue/saturation/gain  
         # for that color
         return self._send_read_packet_two_byte(CMD.HUE_TINT)
+    
+    def set_hue(self, value: int):
+        set_value_by_increment(self.get_hue, self.adjust_hue, value)
 
     def adjust_saturation(self, data: Adjustment):
         # set primary color before you adjust hue/saturation/gain  
@@ -876,6 +931,9 @@ class ViewSonicProjector:
         # for that color
         return self._send_read_packet_two_byte(CMD.SATURATION)
 
+    def set_saturation(self, value: int):
+        set_value_by_increment(self.get_saturation, self.adjust_saturation, value)
+
     def adjust_gain(self, data: Adjustment):
         # set primary color before you adjust hue/saturation/gain  
         # for that color
@@ -886,11 +944,17 @@ class ViewSonicProjector:
         # for that color
         return self._send_read_packet_two_byte(CMD.GAIN)
     
+    def set_gain(self, value: int):
+        set_value_by_increment(self.get_gain, self.adjust_gain, value)
+    
     def adjust_sharpness(self, data: Adjustment):
         self._send_write_packet_one_byte(CMD.SHARPNESS + data)
 
     def get_sharpness(self) -> int:
         return self._send_read_packet_two_byte(CMD.SHARPNESS)
+    
+    def set_sharpness(self, value: int):
+        set_value_by_increment(self.get_sharpness, self.adjust_sharpness, value)
 
     def set_freeze(self, data: Bool):
         self._send_write_packet_one_byte(CMD.FREEZE + data)
@@ -934,15 +998,14 @@ class ViewSonicProjector:
     def volume_down(self):
         self._send_write_packet_one_byte(CMD.VOLUME_DOWN + EMPTY)
 
-    # CHECK THIS, THE DOC IS WEIRD 
-    # is it setting the volume to 17 ? 
-    # should I supply an integer ? 
-    # What's the volume range ? [0-20]
-    def set_volume(self):
-        self._send_write_packet_one_byte(CMD.VOLUME + b'\x11')
+    def adjust_volume(self, data: Adjustment):
+        self.volume_up() if data == Adjustment.INCREASE else self.volume_down()
 
     def get_volume(self):
         return self._send_read_packet_one_byte(CMD.VOLUME)
+    
+    def set_volume(self, value: int):
+        set_value_by_increment(self.get_volume, self.adjust_volume, value)
 
     def get_sharpness(self) -> int:
         return self._send_read_packet_two_byte(CMD.SHARPNESS)
