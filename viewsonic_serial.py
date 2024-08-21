@@ -5,6 +5,8 @@ import os
 import json
 from enum import Enum
 
+# TODO add delay to functions that require delays
+
 EMPTY = b'\x00'
 SCANFILE = 'scan.json'
 POWER_ON_WAIT_SECONDS = 60
