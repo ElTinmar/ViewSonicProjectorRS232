@@ -723,6 +723,7 @@ class ViewSonicProjector:
         self._send_write_one_byte(CMD.PROJECTOR_3D_SYNC_INVERT + data)
 
     def get_projector_3d_sync_invert(self) -> Bool:
+        # TODO: problem returns b'\x80'
         return Bool(self._send_read_one_byte(CMD.PROJECTOR_3D_SYNC_INVERT))
     
     def adjust_contrast(self, data: Adjustment) -> None:
@@ -995,11 +996,11 @@ class ViewSonicProjector:
     def get_silence_mode(self) -> Bool:
         return Bool(self._send_read_one_byte(CMD.SILENCE_MODE))
     
-    def set_panel_key_lock(self, data: Bool) -> None:
-        self._send_write_one_byte(CMD.PANEL_KEY_LOCK + data)
+    #def set_panel_key_lock(self, data: Bool) -> None:
+    #    self._send_write_one_byte(CMD.PANEL_KEY_LOCK + data)
 
-    def get_panel_key_lock(self) -> Bool:
-        return Bool(self._send_read_one_byte(CMD.PANEL_KEY_LOCK))
+    #def get_panel_key_lock(self) -> Bool:
+    #    return Bool(self._send_read_one_byte(CMD.PANEL_KEY_LOCK))
     
     def volume_up(self) -> None:
         self._send_write_one_byte(CMD.VOLUME_UP + EMPTY)
