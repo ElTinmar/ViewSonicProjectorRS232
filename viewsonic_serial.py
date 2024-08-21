@@ -58,6 +58,7 @@ class HEADER:
 # POWER_ON_OFF_RING_TONE_ENABLE
 
 class CMD:
+    
     REMOTE_KEY = b'\x02\x04'
 
     GAMMA = b'\x05\xca'
@@ -169,6 +170,7 @@ class CMD:
     ASPECT_RATIO_CYCLE =  b'\x13\x31'
     AUDIO_MODE_CYCLE = b'\x13\x35'
     LAMP_MODE_CYCLE = b'\x13\x36'
+    SET_VOLUME_LEVEL = b'\x13\x2a'
 
     MUTE = b'\x14\x00'
     VOLUME_UP = b'\x14\x01'
@@ -240,6 +242,16 @@ class PowerStatus:
     COOL_DOWN = 3
     ON = 1
     OFF = 0
+
+class RemoteKey:
+    GUIDE = b'\x0b'
+    MENU = b'\x0f'
+    CANCEL = b'\x13'
+    UP 	= b'\x0b'
+    DOWN = b'\x0c'
+    LEFT = b'\x0d'
+    RIGHT = b'\x0e'
+    ENTER = b'\x15'
 
 class Bool:
     OFF = b'\x00'
