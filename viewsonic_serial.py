@@ -72,7 +72,7 @@ class CMD:
     PROJECTOR_MODEL = b'\x0c\x0a'
     # X = b'\x0c\x0c'
     ERROR_STATUS =  b'\x0c\x0d'
-    UNKNOWN_STATUS_INFO = b'\x0c\x0f' # changes with time, contains 8 bytes of info, maybe a counter or something 
+    UNKNOWN_STATUS_INFO = b'\x0c\x0f' # changes with time, contains 8 bytes of info, maybe a timer/counter or something 
     # X = b'\x0c\x11'
     # X = b'\x0c\x21'
     # X = b'\x0c\x23'
@@ -194,7 +194,7 @@ class CMD:
     # X = b'\x16\x8a'
     # X = b'\x16\x8b'
     # X = b'\x16\x8c' 
-    # X = b'\x16\x8d' activated by test pattern value 12
+    # X = b'\x16\x8d' 
     # X = b'\x16\x8e'
     DIRECT_POWER_ON = b'\x16\x8f' #Allows the projector to turn on automatically once power is fed through the power cord.
     # X = b'\x16\x99'
