@@ -497,7 +497,6 @@ def packet_data_to_ascii(response: bytes) -> str:
     data = response[-data_start:-1]
     return data.decode('ascii').replace('\x00', '')
 
-
 def set_value_by_increment(
         read_fun: Callable[[], int], 
         increment_fun: Callable[[Adjustment], None], 
