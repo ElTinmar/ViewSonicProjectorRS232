@@ -1248,22 +1248,12 @@ def set_fast_mode(proj: ViewSonicProjector) -> None:
     
     if proj.get_power_status() == PowerStatus.OFF:
         proj.power_on()
-        time.sleep(20)
+        
     proj.reset_all_settings()
-    time.sleep(20)
     proj.set_mute(Bool.ON)
-    time.sleep(0.1)
     proj.set_source_input(SourceInput.HDMI_1)
-    time.sleep(20)
     proj.set_fast_input_mode(Bool.ON)
-    time.sleep(20)
     
     if proj.get_fast_input_mode() == 0:
         raise RuntimeError('failed to set to fast mode')
 
-if __name__ == '__main__':
-
-    proj = ViewSonicProjector(verbose=True)
-    proj.power_on()
-    time.sleep(20)
-    proj.power_off()
