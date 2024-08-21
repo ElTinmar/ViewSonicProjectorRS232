@@ -886,8 +886,8 @@ class ViewSonicProjector:
     def set_color_mode(self, data: ColorMode) -> None:
         self._send_write_one_byte(CMD.COLOR_MODE + data)
 
-    def get_color_mode(self) -> int:
-        return one_byte_to_int(self._send_read_one_byte(CMD.COLOR_MODE))
+    def get_color_mode(self) -> ColorMode:
+        return ColorMode(self._send_read_one_byte(CMD.COLOR_MODE))
 
     def set_auto_power_off(self, data: AutoPowerOff) -> None:
         self._send_write_one_byte(CMD.AUTO_POWER_OFF + data)
