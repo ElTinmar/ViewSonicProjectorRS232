@@ -75,7 +75,7 @@ class CMD(BytesEnum):
     PROJECTOR_MODEL = b'\x0c\x0a'
     # X = b'\x0c\x0c'
     ERROR_STATUS =  b'\x0c\x0d'
-    UNKNOWN_STATUS_INFO = b'\x0c\x0f' # changes with time, contains 8 bytes of info, maybe a counter or something 
+    UNKNOWN_STATUS_INFO = b'\x0c\x0f' # changes with time, contains 8 bytes of info, maybe a timer/counter or something 
     # X = b'\x0c\x11'
     # X = b'\x0c\x21'
     # X = b'\x0c\x23'
@@ -173,6 +173,7 @@ class CMD(BytesEnum):
     ASPECT_RATIO_CYCLE =  b'\x13\x31'
     AUDIO_MODE_CYCLE = b'\x13\x35'
     LAMP_MODE_CYCLE = b'\x13\x36'
+    SET_VOLUME_LEVEL = b'\x13\x2a'
 
     MUTE = b'\x14\x00'
     VOLUME_UP = b'\x14\x01'
@@ -196,7 +197,7 @@ class CMD(BytesEnum):
     # X = b'\x16\x8a'
     # X = b'\x16\x8b'
     # X = b'\x16\x8c' 
-    # X = b'\x16\x8d' activated by test pattern value 12
+    # X = b'\x16\x8d' 
     # X = b'\x16\x8e'
     DIRECT_POWER_ON = b'\x16\x8f' #Allows the projector to turn on automatically once power is fed through the power cord.
     # X = b'\x16\x99'
@@ -242,6 +243,16 @@ class PowerStatus(BytesEnum):
     COOL_DOWN = b'\x03'
     ON = b'\x01'
     OFF = b'\x00'
+
+class RemoteKey(BytesEnum):
+    GUIDE = b'\x0b'
+    MENU = b'\x0f'
+    CANCEL = b'\x13'
+    UP 	= b'\x0b'
+    DOWN = b'\x0c'
+    LEFT = b'\x0d'
+    RIGHT = b'\x0e'
+    ENTER = b'\x15'
 
 class Bool(BytesEnum):
     OFF = b'\x00'
