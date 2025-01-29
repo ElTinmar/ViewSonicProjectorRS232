@@ -263,6 +263,9 @@ class Bool(BytesEnum):
     OFF = b'\x00'
     ON = b'\x01'
 
+    def __bool__(self):
+        return True if self.value == b'\x01' else False
+
 class Adjustment(BytesEnum):
     DECREASE = b'\x00'
     INCREASE = b'\x01'
