@@ -29,6 +29,9 @@ class FunctionDisabled(Exception):
 class ProjectorOFF(Exception):
     pass
 
+class ProjectorNotConnected(Exception):
+    pass
+
 class CommandFailed(Exception):
     pass
 
@@ -560,17 +563,20 @@ class ViewSonicProjector:
         self.write_timeout = write_timeout
         self.flow_control = flow_control
         self.verbose = verbose
-
-        self.ser = serial.Serial(
-            port = port,
-            baudrate = baudrate,
-            bytesize = data_byte_length,
-            parity = parity_check,
-            stopbits = num_stop_bit,
-            timeout = timeout,
-            write_timeout= write_timeout,
-            rtscts = flow_control
-        )
+        
+        try:
+            self.ser = serial.Serial(
+                port = port,
+                baudrate = baudrate,
+                bytesize = data_byte_length,
+                parity = parity_check,
+                stopbits = num_stop_bit,
+                timeout = timeout,
+                write_timeout= write_timeout,
+                rtscts = flow_control
+            )
+        except FileNotFoundError:
+            raise ProjectorNotConnected
 
     def __del__(self):
         self.ser.close()
