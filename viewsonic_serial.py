@@ -249,6 +249,9 @@ class PowerStatus(BytesEnum):
     ON = b'\x01'
     OFF = b'\x00'
 
+    def __bool__(self):
+        return True if self.value == b'\x01' else False
+
 class RemoteKey(BytesEnum):
     GUIDE = b'\x0b'
     MENU = b'\x0f'
