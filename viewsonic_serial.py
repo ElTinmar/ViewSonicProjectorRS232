@@ -563,7 +563,8 @@ class ViewSonicProjector:
         self.write_timeout = write_timeout
         self.flow_control = flow_control
         self.verbose = verbose
-        
+        self.ser = None
+
         try:
             self.ser = serial.Serial(
                 port = port,
@@ -579,7 +580,8 @@ class ViewSonicProjector:
             raise ConnectionFailed
 
     def __del__(self):
-        self.ser.close()
+        if self.ser is not None:
+            self.ser.close()
 
     def power_on(self) -> None:
         '''
