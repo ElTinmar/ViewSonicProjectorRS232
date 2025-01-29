@@ -16,6 +16,9 @@ class BytesEnum(bytes, Enum):
     """
     Enum where members are also (and must be) bytes
     """
+
+    def __str__(self):
+        return self.name
     
 class TransmissionError(Exception):
     pass
