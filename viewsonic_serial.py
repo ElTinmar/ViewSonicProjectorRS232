@@ -29,7 +29,7 @@ class FunctionDisabled(Exception):
 class ProjectorOFF(Exception):
     pass
 
-class ProjectorNotConnected(Exception):
+class ConnectionFailed(Exception):
     pass
 
 class CommandFailed(Exception):
@@ -575,8 +575,8 @@ class ViewSonicProjector:
                 write_timeout= write_timeout,
                 rtscts = flow_control
             )
-        except FileNotFoundError:
-            raise ProjectorNotConnected
+        except serial.SerialException:
+            raise ConnectionFailed
 
     def __del__(self):
         self.ser.close()
