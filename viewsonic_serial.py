@@ -11,6 +11,7 @@ EMPTY = b'\x00'
 SCANFILE = 'scan.json'
 POWER_ON_WAIT_SECONDS = 30
 POWER_OFF_WAIT_SECONDS = 20
+UPDATE_WAIT_SECONDS = 5
 
 class BytesEnum(bytes, Enum):
     """
@@ -599,7 +600,7 @@ class ViewSonicProjector:
             res = self.get_power_status()
                 
             if res in [PowerStatus.OFF, PowerStatus.WARM_UP]:
-                time.sleep(5)
+                time.sleep(UPDATE_WAIT_SECONDS)
 
             elif res == PowerStatus.ON:
                 break
@@ -623,7 +624,7 @@ class ViewSonicProjector:
             res = self.get_power_status()
 
             if res in [PowerStatus.ON, PowerStatus.COOL_DOWN]:
-                time.sleep(5)
+                time.sleep(UPDATE_WAIT_SECONDS)
 
             elif res == PowerStatus.OFF:
                 break
@@ -696,6 +697,7 @@ class ViewSonicProjector:
     
     def set_fast_input_mode(self, data: Bool) -> None:
         self._send_write_one_byte(CMD.FAST_INPUT_MODE + data)
+        time.sleep(UPDATE_WAIT_SECONDS)
 
     def get_fast_input_mode(self) -> Bool:
         return Bool(self._send_read_one_byte(CMD.FAST_INPUT_MODE))
@@ -991,6 +993,7 @@ class ViewSonicProjector:
 
     def set_source_input(self, data: SourceInput) -> None:
         self._send_write_one_byte(CMD.SOURCE_INPUT + data)
+        time.sleep(UPDATE_WAIT_SECONDS)
 
     def get_source_input(self) -> SourceInput:
         return SourceInput(self._send_read_one_byte(CMD.SOURCE_INPUT))        
