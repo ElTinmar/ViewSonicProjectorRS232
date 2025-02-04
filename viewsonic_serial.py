@@ -495,7 +495,7 @@ class RemoteKey(BytesEnum):
 
 def checksum(packet: bytes) -> bytes:
     '''compute checksum as the sum of bytes 1 to end'''
-    return (sum(packet[1:]) % 256).to_bytes()
+    return (sum(packet[1:]) % 256).to_bytes(length=1, byteorder='big')
 
 def payload_length(header: bytes) -> int:
     '''get payload length from header (data + checksum)'''
