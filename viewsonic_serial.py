@@ -9,8 +9,8 @@ from enum import Enum
 
 EMPTY = b'\x00'
 SCANFILE = 'scan.json'
-POWER_ON_WAIT_SECONDS = 60
-POWER_OFF_WAIT_SECONDS = 60
+POWER_ON_WAIT_SECONDS = 30
+POWER_OFF_WAIT_SECONDS = 20
 
 class BytesEnum(bytes, Enum):
     """
