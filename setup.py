@@ -4,7 +4,7 @@ setup(
     name='ViewSonicProjectorRS232',
     python_requires='>=3.8',
     author='Martin Privat',
-    version='0.1.9',
+    version='0.1.10',
     packages=[''],
     license='Creative Commons Attribution-Noncommercial-Share Alike license',
     description='Control Viewsonic pojector over serial',

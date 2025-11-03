@@ -1139,10 +1139,31 @@ class ViewSonicProjector:
     def cycle_audio_mode(self) -> None:
         self._send_write_one_byte(CMD.AUDIO_MODE_CYCLE + EMPTY)
 
+    def is_responsive(self) -> bool:
+        try:
+            _ = self.get_power_status()
+            return True
+        except TransmissionError:
+            return False
+
+    def recover_serial(self) -> None:
+        """Try to recover from a bad serial state."""
+        try:
+            self.ser.close()
+        except Exception:
+            pass
+        time.sleep(1)
+        try:
+            self.ser.open()
+            print("Serial port reopened successfully.")
+        except Exception as e:
+            print(f"Failed to recover serial: {e}")
+        
     def _send_packet(self, packet: bytes) -> bytes:
 
-        self.ser.reset_input_buffer()
-        self.ser.reset_output_buffer()
+        #self.ser.reset_input_buffer()
+        #self.ser.reset_output_buffer()
+        self.ser.read_all()
 
         query = packet + checksum(packet)
 
