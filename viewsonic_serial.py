@@ -1161,8 +1161,6 @@ class ViewSonicProjector:
         
     def _send_packet(self, packet: bytes) -> bytes:
 
-        #self.ser.reset_input_buffer()
-        #self.ser.reset_output_buffer()
         self.ser.read_all()
 
         query = packet + checksum(packet)
